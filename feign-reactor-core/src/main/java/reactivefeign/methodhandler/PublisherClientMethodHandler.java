@@ -420,8 +420,13 @@ public class PublisherClientMethodHandler implements MethodHandler {
             chunks.add(data -> textChunk);
         }
 
-        return substitutions -> chunks.stream().map(chunk -> chunk.apply(substitutions))
-                .collect(Collectors.joining());
+        return substitutions -> {
+            StringBuilder sb = new StringBuilder();
+            for (Function<Substitutions, String> chunk : chunks) {
+                sb.append(chunk.apply(substitutions));
+            }
+            return sb.toString();
+        };
     }
 
     private static class StaticExpander implements Function<Substitutions, String>{
