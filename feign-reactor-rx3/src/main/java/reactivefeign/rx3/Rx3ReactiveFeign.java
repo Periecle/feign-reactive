@@ -4,6 +4,7 @@ import feign.Contract;
 import feign.MethodMetadata;
 import io.reactivex.rxjava3.core.*;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactivefeign.ReactiveOptions;
 import reactivefeign.client.ReactiveHttpClient;
@@ -145,7 +146,9 @@ public final class Rx3ReactiveFeign {
                     .map(type -> ParameterizedTypeReference.forType(type))
                     .orElse(null);
 
-            return new WebReactiveHttpClient(webClient, bodyActualType,
+            HttpMethod httpMethod = HttpMethod.valueOf(methodMetadata.template().method());
+
+            return new WebReactiveHttpClient(httpMethod, webClient, bodyActualType,
                     webReactiveHttpResponse(rx2ToReactor(returnPublisherType), returnActualType),
                     errorMapper());
         }

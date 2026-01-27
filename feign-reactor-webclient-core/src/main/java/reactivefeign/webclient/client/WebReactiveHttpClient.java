@@ -57,6 +57,7 @@ import static reactivefeign.utils.FeignUtils.returnPublisherType;
 public class WebReactiveHttpClient<P extends Publisher<?>> implements ReactiveHttpClient<P> {
 
 	private final WebClient webClient;
+	private final HttpMethod method;
 	private final ParameterizedTypeReference<Object> bodyActualType;
 	private final BiFunction<ReactiveHttpRequest, ClientResponse, ReactiveHttpResponse<P>> responseFunction;
 	private final BiFunction<ReactiveHttpRequest, Throwable, Throwable> errorMapper;
@@ -73,6 +74,8 @@ public class WebReactiveHttpClient<P extends Publisher<?>> implements ReactiveHt
 				.map(ParameterizedTypeReference::forType)
 				.orElse(null);
 
+		HttpMethod httpMethod = HttpMethod.valueOf(methodMetadata.template().method());
+
 		if (returnActualType.getType() instanceof ParameterizedType
 				&& ((ParameterizedType) returnActualType.getType()).getRawType().equals(ResponseEntity.class)) {
 			Type entityType = resolveLastTypeParameter(returnActualType.getType(), ResponseEntity.class);
@@ -85,12 +88,12 @@ public class WebReactiveHttpClient<P extends Publisher<?>> implements ReactiveHt
 			Type entityPublisherType = returnPublisherType(entityType);
 			ParameterizedTypeReference<?> entityActualType = forType(returnActualType(entityType));
 
-			return new WebReactiveHttpClient<>(webClient, bodyActualType,
+			return new WebReactiveHttpClient<>(httpMethod, webClient, bodyActualType,
 					(request, response) -> new WebReactiveHttpEntityResponse<>(request, response, entityPublisherType, entityActualType),
 					errorMapper);
 		}
 
-		return new WebReactiveHttpClient<>(webClient, bodyActualType,
+		return new WebReactiveHttpClient<>(httpMethod, webClient, bodyActualType,
 				webReactiveHttpResponse(returnPublisherType, returnActualType),
 				errorMapper);
 	}
@@ -99,19 +102,30 @@ public class WebReactiveHttpClient<P extends Publisher<?>> implements ReactiveHt
 		return (request, response) -> new WebReactiveHttpResponse<>(request, response, returnPublisherType, returnActualType);
 	}
 
-	public WebReactiveHttpClient(WebClient webClient,
+	public WebReactiveHttpClient(HttpMethod method,
+								 WebClient webClient,
 								 ParameterizedTypeReference<Object> bodyActualType,
 								 BiFunction<ReactiveHttpRequest, ClientResponse, ReactiveHttpResponse<P>> responseFunction,
 								 BiFunction<ReactiveHttpRequest, Throwable, Throwable> errorMapper) {
+		this.method = method;
 		this.webClient = webClient;
 		this.bodyActualType = bodyActualType;
 		this.responseFunction = responseFunction;
 		this.errorMapper = errorMapper;
 	}
 
+	@Deprecated
+	public WebReactiveHttpClient(WebClient webClient,
+								 ParameterizedTypeReference<Object> bodyActualType,
+								 BiFunction<ReactiveHttpRequest, ClientResponse, ReactiveHttpResponse<P>> responseFunction,
+								 BiFunction<ReactiveHttpRequest, Throwable, Throwable> errorMapper) {
+		this(null, webClient, bodyActualType, responseFunction, errorMapper);
+	}
+
 	@Override
 	public Mono<ReactiveHttpResponse<P>> executeRequest(ReactiveHttpRequest request) {
-		return webClient.method(HttpMethod.valueOf(request.method()))
+		HttpMethod requestMethod = method != null ? method : HttpMethod.valueOf(request.method());
+		return webClient.method(requestMethod)
 				.uri(request.uri())
 				.headers(httpHeaders -> setUpHeaders(request, httpHeaders))
 				.body(provideBody(request))
