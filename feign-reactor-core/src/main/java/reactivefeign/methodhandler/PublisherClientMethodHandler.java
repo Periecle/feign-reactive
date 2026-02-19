@@ -34,7 +34,6 @@ import reactor.core.publisher.Mono;
 
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -56,7 +55,6 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
 import static reactivefeign.utils.FormUtils.serializeForm;
 import static reactivefeign.utils.HttpUtils.CONTENT_TYPE_HEADER;
 import static reactivefeign.utils.HttpUtils.FORM_URL_ENCODED;
@@ -167,12 +165,18 @@ public class PublisherClientMethodHandler implements MethodHandler {
     }
 
     private Substitutions buildSubstitutions(Object[] argv) {
-        Map<String, Object> substitutions = methodMetadata.indexToName().entrySet().stream()
-                .filter(e -> argv[e.getKey()] != null)
-                .flatMap(e -> e.getValue().stream()
-                        .map(v -> new AbstractMap.SimpleImmutableEntry<>(e.getKey(), v)))
-                .collect(toMap(Map.Entry::getValue,
-                        entry -> argv[entry.getKey()]));
+        Map<String, Object> substitutions = new HashMap<>();
+        for (Map.Entry<Integer, Collection<String>> entry : methodMetadata.indexToName().entrySet()) {
+            Integer index = entry.getKey();
+            if (index < argv.length) {
+                Object value = argv[index];
+                if (value != null) {
+                    for (String name : entry.getValue()) {
+                        substitutions.put(name, value);
+                    }
+                }
+            }
+        }
 
         URI url = methodMetadata.urlIndex() != null ? (URI) argv[methodMetadata.urlIndex()] : null;
         return new Substitutions(substitutions, url);
