@@ -1,10 +1,10 @@
 package reactivefeign.jetty.h1;
 
-import org.junit.Ignore;
+import org.junit.jupiter.api.Disabled;
 import reactivefeign.ReactiveFeignBuilder;
 import reactivefeign.jetty.JettyReactiveFeign;
 
-@Ignore
+@Disabled
 //TODO add support for Jetty based
 public class MultiPartTest extends reactivefeign.MultiPartTest {
 

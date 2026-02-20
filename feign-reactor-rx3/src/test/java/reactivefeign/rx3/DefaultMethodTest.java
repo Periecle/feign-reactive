@@ -14,14 +14,14 @@
 package reactivefeign.rx3;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import feign.RequestLine;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import reactivefeign.ReactiveFeign;
 import reactivefeign.ReactiveOptions;
 import reactivefeign.rx3.testcase.IcecreamServiceApi;
@@ -31,6 +31,7 @@ import reactivefeign.webclient.WebReactiveOptions;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static reactivefeign.rx3.TestUtils.assertValue;
 import static reactivefeign.rx3.TestUtils.equalsComparingFieldByFieldRecursivelyRx;
 
@@ -39,11 +40,10 @@ import static reactivefeign.rx3.TestUtils.equalsComparingFieldByFieldRecursively
  */
 public class DefaultMethodTest {
 
-  @ClassRule
-  public static WireMockClassRule wireMockRule = new WireMockClassRule(
-      wireMockConfig().dynamicPort());
+  @RegisterExtension
+  public static WireMockExtension wireMockRule = WireMockExtension.newInstance().options(wireMockConfig().dynamicPort()).build();
 
-  @Before
+  @BeforeEach
   public void resetServers() {
     wireMockRule.resetAll();
   }
@@ -72,22 +72,24 @@ public class DefaultMethodTest {
             .withBody(orderStr)));
 
     IcecreamServiceApi client = builder()
-        .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.port());
+        .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.getPort());
 
 
     TestObserver<IceCreamOrder> testObserver = client.findFirstOrder().test().await();
     assertValue(testObserver, equalsComparingFieldByFieldRecursivelyRx(orderGenerated));
   }
 
-  @Test(expected = RuntimeException.class)
+  @Test
   public void shouldNotWrapException() {
-    IceCreamOrder orderGenerated = new OrderGenerator().generate(1);
+    assertThrows(RuntimeException.class, () -> {
+      IceCreamOrder orderGenerated = new OrderGenerator().generate(1);
 
-    IcecreamServiceApi client = builder()
-        .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.port());
+      IcecreamServiceApi client = builder()
+              .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.getPort());
 
-    client.throwsException().onErrorReturn(
-        throwable -> orderGenerated).blockingGet();
+      client.throwsException().onErrorReturn(
+              throwable -> orderGenerated).blockingGet();
+    });
   }
 
   @Test
@@ -99,18 +101,18 @@ public class DefaultMethodTest {
             .setConnectTimeoutMillis(300)
             .build())
                 .target(IcecreamServiceApi.class,
-                    "http://localhost:" + wireMockRule.port());
+                    "http://localhost:" + wireMockRule.getPort());
 
     IcecreamServiceApi clientWithSameTarget = builder()
-        .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.port());
+        .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.getPort());
     Assertions.assertThat(client).isEqualTo(clientWithSameTarget);
 
     IcecreamServiceApi clientWithOtherPort = builder()
-        .target(IcecreamServiceApi.class, "http://localhost:" + (wireMockRule.port() + 1));
+        .target(IcecreamServiceApi.class, "http://localhost:" + (wireMockRule.getPort() + 1));
     Assertions.assertThat(client).isNotEqualTo(clientWithOtherPort);
 
     OtherApi clientWithOtherInterface = builder(OtherApi.class)
-        .target(OtherApi.class, "http://localhost:" + wireMockRule.port());
+        .target(OtherApi.class, "http://localhost:" + wireMockRule.getPort());
     Assertions.assertThat(client).isNotEqualTo(clientWithOtherInterface);
   }
 
@@ -123,10 +125,10 @@ public class DefaultMethodTest {
   public void shouldOverrideHashcode() {
 
     IcecreamServiceApi client = builder()
-        .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.port());
+        .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.getPort());
 
     IcecreamServiceApi otherClientWithSameTarget = builder()
-        .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.port());
+        .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.getPort());
 
     Assertions.assertThat(client.hashCode()).isEqualTo(otherClientWithSameTarget.hashCode());
   }
@@ -135,11 +137,11 @@ public class DefaultMethodTest {
   public void shouldOverrideToString() {
 
     IcecreamServiceApi client = builder()
-        .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.port());
+        .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.getPort());
 
     Assertions.assertThat(client.toString())
         .isEqualTo("HardCodedTarget(type=IcecreamServiceApi, "
-            + "url=http://localhost:" + wireMockRule.port() + ")");
+            + "url=http://localhost:" + wireMockRule.getPort() + ")");
   }
 
 }

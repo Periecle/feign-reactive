@@ -16,10 +16,12 @@ package reactivefeign;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.github.tomakehurst.wiremock.stubbing.ServeEvent;
 import feign.FeignException;
 import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import reactivefeign.client.ReadTimeoutException;
 import reactivefeign.testcase.IcecreamServiceApi;
 import reactivefeign.testcase.domain.IceCreamOrder;
@@ -40,13 +42,14 @@ import static reactivefeign.TestUtils.equalsComparingFieldByFieldRecursively;
  */
 abstract public class OptionsTest extends BaseReactorTest {
 
-  @Rule
-  public WireMockClassRule wireMockRule = new WireMockClassRule(
-      wireMockConfig().dynamicPort());
+  @RegisterExtension
+  public static WireMockExtension wireMockRule = WireMockExtension.newInstance().options(wireMockConfig().dynamicPort()).build();
 
-  @Rule
-  public WireMockClassRule wireMockProxyRule = new WireMockClassRule(
-          wireMockConfig().dynamicPort().enableBrowserProxying(true));
+  @RegisterExtension
+  public static WireMockExtension wireMockProxyRule = WireMockExtension.newInstance().options(wireMockConfig()
+          .dynamicPort()
+          .enableBrowserProxying(true)
+  ).build();
 
   abstract protected ReactiveFeignBuilder<IcecreamServiceApi> builder(long readTimeoutInMillis);
 
@@ -54,7 +57,7 @@ abstract public class OptionsTest extends BaseReactorTest {
 
   abstract protected ReactiveFeignBuilder<IcecreamServiceApi> builder(ProxySettings proxySettings);
 
-  protected WireMockConfiguration wireMockConfig(){
+  protected static WireMockConfiguration wireMockConfig(){
     return WireMockConfiguration.wireMockConfig();
   }
 
@@ -69,7 +72,7 @@ abstract public class OptionsTest extends BaseReactorTest {
 
     IcecreamServiceApi client = builder(100)
                 .target(IcecreamServiceApi.class,
-                    "http://localhost:" + wireMockRule.port());
+                    "http://localhost:" + wireMockRule.getPort());
 
     StepVerifier.create(client.findOrder(1).subscribeOn(testScheduler()))
         .expectError(ReadTimeoutException.class)
@@ -94,7 +97,7 @@ abstract public class OptionsTest extends BaseReactorTest {
 
     IcecreamServiceApi client = builder(true)
             .target(IcecreamServiceApi.class,
-                    "http://localhost:" + wireMockRule.port());
+                    "http://localhost:" + wireMockRule.getPort());
 
     StepVerifier.create(client.findOrderWithRedirect(1).subscribeOn(testScheduler()))
             .expectNextMatches(equalsComparingFieldByFieldRecursively(orderExpected))
@@ -119,7 +122,7 @@ abstract public class OptionsTest extends BaseReactorTest {
 
     IcecreamServiceApi client = builder(false)
             .target(IcecreamServiceApi.class,
-                    "http://localhost:" + wireMockRule.port());
+                    "http://localhost:" + wireMockRule.getPort());
 
     StepVerifier.create(client.findOrderWithRedirect(1).subscribeOn(testScheduler()))
             .expectErrorMatches(throwable -> throwable instanceof FeignException
@@ -139,9 +142,9 @@ abstract public class OptionsTest extends BaseReactorTest {
                     .withBody(MAPPER.writeValueAsString(orderExpected))));
 
     IcecreamServiceApi client = builder(
-            new ProxySettingsBuilder().host("localhost").port(wireMockProxyRule.port()).build())
+            new ProxySettingsBuilder().host("localhost").port(wireMockProxyRule.getPort()).build())
             .target(IcecreamServiceApi.class,
-                    "http://localhost:" + wireMockRule.port());
+                    "http://localhost:" + wireMockRule.getPort());
 
     StepVerifier.create(client.findOrder(1).subscribeOn(testScheduler()))
             .expectNextMatches(equalsComparingFieldByFieldRecursively(orderExpected))

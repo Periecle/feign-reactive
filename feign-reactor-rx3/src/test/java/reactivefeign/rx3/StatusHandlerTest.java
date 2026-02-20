@@ -13,12 +13,12 @@
  */
 package reactivefeign.rx3;
 
-import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import feign.Request;
 import feign.RetryableException;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import reactivefeign.rx3.testcase.IcecreamServiceApi;
 
 import java.nio.charset.Charset;
@@ -39,15 +39,14 @@ import static reactivefeign.utils.HttpStatus.SC_UNAUTHORIZED;
  */
 public class StatusHandlerTest {
 
-  @ClassRule
-  public static WireMockClassRule wireMockRule = new WireMockClassRule(
-      wireMockConfig().dynamicPort());
+  @RegisterExtension
+  public static WireMockExtension wireMockRule = WireMockExtension.newInstance().options(wireMockConfig().dynamicPort()).build();
 
   protected Rx3ReactiveFeign.Builder<IcecreamServiceApi> builder(){
     return Rx3ReactiveFeign.builder();
   }
 
-  @Before
+  @BeforeEach
   public void resetServers() {
     wireMockRule.resetAll();
   }
@@ -70,7 +69,7 @@ public class StatusHandlerTest {
                       "Should retry on next node",
                       httpMethod, (Long)null, request);
             }))
-        .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.port());
+        .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.getPort());
 
     client.findFirstOrder().test()
             .await()
@@ -90,7 +89,7 @@ public class StatusHandlerTest {
             throwOnStatus(
                 status -> status == SC_UNAUTHORIZED,
                 (methodTag, response) -> new RuntimeException("Should login", null)))
-        .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.port());
+        .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.getPort());
 
     client.findOrder(2).test()
             .await()

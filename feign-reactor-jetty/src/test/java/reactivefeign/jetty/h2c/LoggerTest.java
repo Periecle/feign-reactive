@@ -37,8 +37,7 @@ public class LoggerTest extends reactivefeign.LoggerTest<LoggerTest.IcecreamServ
         return "h2c_";
     }
 
-    @Override
-    protected WireMockConfiguration wireMockConfig(){
+    protected static WireMockConfiguration wireMockConfig(){
         return h2cConfig();
     }
 

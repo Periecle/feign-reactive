@@ -14,7 +14,9 @@
 package reactivefeign.webclient.client5.h2c;
 
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import org.junit.Ignore;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import reactivefeign.ReactiveFeign;
 import reactivefeign.testcase.IcecreamServiceApi;
 
@@ -25,16 +27,23 @@ import static reactivefeign.wiremock.WireMockServerConfigurations.h2cConfig;
  * @author Sergii Karpenko
  */
 //TODO Investigate why not working
-@Ignore
+@Disabled
 public class CompressionTest extends reactivefeign.CompressionTest {
 
-  @Override
-  protected WireMockConfiguration wireMockConfig(){
+  @RegisterExtension
+  public static WireMockExtension wireMockRule = WireMockExtension.newInstance().options(wireMockConfig().dynamicPort()).build();
+
+  protected static WireMockConfiguration wireMockConfig(){
     return h2cConfig();
   }
 
   @Override
   protected ReactiveFeign.Builder<IcecreamServiceApi> builder(boolean tryUseCompression) {
     return builderHttp2WithAcceptCompressed(true);
+  }
+
+  @Override
+  public WireMockExtension getWiremockRule() {
+    return wireMockRule;
   }
 }

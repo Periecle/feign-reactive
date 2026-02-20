@@ -14,8 +14,8 @@
 package reactivefeign.webclient.client5.h2c;
 
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import reactivefeign.ReactiveFeign;
 import reactivefeign.testcase.IcecreamServiceApi;
 
@@ -29,7 +29,7 @@ import static reactivefeign.wiremock.WireMockServerConfigurations.h2cConfig;
 public class LoggerTest extends reactivefeign.LoggerTest<LoggerTest.IcecreamServiceApiJettyH2> {
 
     //TODO investigate why socket timeout doesn't work
-    @Ignore
+    @Disabled
     @Override
     @Test
     public void shouldLogTimeout() {
@@ -40,8 +40,7 @@ public class LoggerTest extends reactivefeign.LoggerTest<LoggerTest.IcecreamServ
         return "h2c_";
     }
 
-    @Override
-    protected WireMockConfiguration wireMockConfig(){
+    protected static WireMockConfiguration wireMockConfig(){
         return h2cConfig();
     }
 

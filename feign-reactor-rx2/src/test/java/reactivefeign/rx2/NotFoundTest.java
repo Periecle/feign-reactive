@@ -13,14 +13,14 @@
  */
 package reactivefeign.rx2;
 
-import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
-import org.junit.ClassRule;
-import org.junit.Test;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import reactivefeign.ReactiveFeign;
 import reactivefeign.rx2.testcase.IcecreamServiceApi;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static reactivefeign.utils.HttpStatus.SC_NOT_FOUND;
 
 /**
@@ -28,16 +28,16 @@ import static reactivefeign.utils.HttpStatus.SC_NOT_FOUND;
  */
 public class NotFoundTest {
 
-  @ClassRule
-  public static WireMockClassRule wireMockRule = new WireMockClassRule(
-      wireMockConfig().dynamicPort());
+  @RegisterExtension
+  public static WireMockExtension wireMockRule = WireMockExtension.newInstance().options(WireMockConfiguration.wireMockConfig()
+          .dynamicPort()).build();
 
   protected ReactiveFeign.Builder<IcecreamServiceApi> builder(){
     return Rx2ReactiveFeign.builder();
   }
 
   @Test
-  public void shouldReturnEmptyMono() throws InterruptedException {
+  void shouldReturnEmptyMono() throws Exception {
 
     String orderUrl = "/icecream/orders/2";
     wireMockRule.stubFor(get(urlEqualTo(orderUrl))
@@ -46,7 +46,7 @@ public class NotFoundTest {
 
     IcecreamServiceApi client = builder()
         .decode404()
-        .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.port());
+        .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.getPort());
 
     client.findOrder(2).test()
             .await()

@@ -14,9 +14,9 @@
 package reactivefeign.rx3;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.Test;
 import reactivefeign.ReactiveFeign;
 import reactivefeign.rx3.testcase.IcecreamServiceApi;
 import reactivefeign.rx3.testcase.domain.IceCreamOrder;
@@ -38,11 +38,10 @@ public class ReactivityTest {
   public static final int CALLS_NUMBER = 500;
   public static final int REACTIVE_GAIN_RATIO = 50;
 
-  @Rule
-  public WireMockClassRule wireMockRule = new WireMockClassRule(
-      wireMockConfig()
+  @RegisterExtension
+  public WireMockExtension wireMockRule = WireMockExtension.newInstance().options(wireMockConfig()
           .asynchronousResponseEnabled(true)
-          .dynamicPort());
+          .dynamicPort()).build();
 
   protected ReactiveFeign.Builder<IcecreamServiceApi> builder(){
     return Rx3ReactiveFeign.builder();
@@ -63,7 +62,7 @@ public class ReactivityTest {
 
     IcecreamServiceApi client = builder()
         .target(IcecreamServiceApi.class,
-            "http://localhost:" + wireMockRule.port());
+            "http://localhost:" + wireMockRule.getPort());
 
     AtomicInteger counter = new AtomicInteger();
 

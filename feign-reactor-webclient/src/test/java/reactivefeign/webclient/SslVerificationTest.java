@@ -17,10 +17,12 @@ package reactivefeign.webclient;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import reactivefeign.ReactiveFeign;
 import reactivefeign.TestUtils;
 import reactivefeign.testcase.IcecreamServiceApi;
@@ -36,6 +38,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static reactivefeign.TestUtils.equalsComparingFieldByFieldRecursively;
 
 /**
@@ -43,11 +46,10 @@ import static reactivefeign.TestUtils.equalsComparingFieldByFieldRecursively;
  */
 public class SslVerificationTest extends reactivefeign.BaseReactorTest {
 
-    @Rule
-    public WireMockClassRule wireMockRule = new WireMockClassRule(wireMockConfig());
+    @RegisterExtension
+    public static WireMockExtension wireMockRule = WireMockExtension.newInstance().options(wireMockConfig()).build();
 
-
-    private WireMockConfiguration wireMockConfig() {
+    private static WireMockConfiguration wireMockConfig() {
         return WireMockConfiguration.wireMockConfig()
                 .httpsPort(8443)
                 .httpDisabled(true);
@@ -55,7 +57,7 @@ public class SslVerificationTest extends reactivefeign.BaseReactorTest {
 
     private IcecreamServiceApi client(boolean disableSslValidation) {
         return builder(disableSslValidation)
-                .target(IcecreamServiceApi.class, "https://localhost:" + wireMockRule.httpsPort());
+                .target(IcecreamServiceApi.class, "https://localhost:" + wireMockRule.getHttpsPort());
     }
 
     private ReactiveFeign.Builder<IcecreamServiceApi> builder(boolean disableSslValidation) {
@@ -105,7 +107,7 @@ public class SslVerificationTest extends reactivefeign.BaseReactorTest {
                                 .trustManager(InsecureTrustManagerFactory.INSTANCE)
                                 .build())
                         .build())
-                .target(IcecreamServiceApi.class, "https://localhost:" + wireMockRule.httpsPort());
+                .target(IcecreamServiceApi.class, "https://localhost:" + wireMockRule.getHttpsPort());
         Mono<Bill> bill = client.makeOrder(order);
 
         StepVerifier.create(bill.subscribeOn(testScheduler()))

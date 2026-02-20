@@ -18,11 +18,10 @@ package reactivefeign.spring.config.cloud2;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import feign.FeignException;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -32,7 +31,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import reactivefeign.publisher.retry.OutOfRetriesException;
@@ -49,7 +47,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static reactivefeign.retry.BasicReactiveRetryPolicy.retry;
 import static reactivefeign.spring.config.cloud2.CloudClientUsingConfigurationsTests.*;
 
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = CloudClientUsingConfigurationsTests.Application.class, webEnvironment = WebEnvironment.NONE,
 		properties = {
 				"spring.cloud.discovery.client.simple.instances."+FOO+"[0].uri=http://localhost:${"+ MOCK_SERVER_PORT_PROPERTY+"}",
@@ -70,19 +67,19 @@ public class CloudClientUsingConfigurationsTests extends BasicAutoconfigurationT
 	private BarClient barClient;
 
 
-	@BeforeClass
+	@BeforeAll
 	public static void setupStubs() {
 		mockHttpServer.start();
 
 		System.setProperty(MOCK_SERVER_PORT_PROPERTY, Integer.toString(mockHttpServer.port()));
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void teardown() {
 		mockHttpServer.stop();
 	}
 
-	@Before
+	@BeforeEach
 	public void reset(){
 		mockHttpServer.resetAll();
 	}

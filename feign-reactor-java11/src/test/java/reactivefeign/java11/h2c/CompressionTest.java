@@ -15,10 +15,14 @@ package reactivefeign.java11.h2c;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import org.junit.Test;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import reactivefeign.ReactiveFeign;
 import reactivefeign.testcase.IcecreamServiceApi;
 
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static reactivefeign.ReactivityTest.CALLS_NUMBER;
 import static reactivefeign.java11.h2c.TestUtils.builderHttp2WithAcceptCompressed;
 import static reactivefeign.wiremock.WireMockServerConfigurations.h2cConfig;
@@ -28,8 +32,10 @@ import static reactivefeign.wiremock.WireMockServerConfigurations.h2cConfig;
  */
 public class CompressionTest extends reactivefeign.CompressionTest {
 
-  @Override
-  protected WireMockConfiguration wireMockConfig(){
+  @RegisterExtension
+  public static WireMockExtension wireMockRule = WireMockExtension.newInstance().options(wireMockConfig().dynamicPort()).build();
+
+  protected static WireMockConfiguration wireMockConfig(){
     return h2cConfig(true, CALLS_NUMBER);
   }
 
@@ -39,8 +45,14 @@ public class CompressionTest extends reactivefeign.CompressionTest {
   }
 
   //TODO implement reactive gzip decoder
-  @Test(expected = java.lang.AssertionError.class)
+  @Test
   public void testCompression() throws JsonProcessingException {
-    super.testCompression();
+    assertThrows(java.lang.AssertionError.class, () ->
+      super.testCompression());
+  }
+
+  @Override
+  public WireMockExtension getWiremockRule() {
+    return wireMockRule;
   }
 }

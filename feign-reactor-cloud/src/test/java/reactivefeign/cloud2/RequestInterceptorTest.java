@@ -15,7 +15,7 @@ package reactivefeign.cloud2;
 
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.timelimiter.TimeLimiterRegistry;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.cloud.circuitbreaker.resilience4j.ReactiveResilience4JCircuitBreakerFactory;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.loadbalancer.reactive.ReactiveLoadBalancer;
@@ -39,9 +39,9 @@ public class RequestInterceptorTest extends reactivefeign.RequestInterceptorTest
 
     private ReactiveLoadBalancer.Factory<ServiceInstance> lbFactory;
 
-    @Before
+    @BeforeEach
     public void setupServersList() {
-        lbFactory = loadBalancerFactory(serviceName, wireMockRule.port());
+        lbFactory = loadBalancerFactory(serviceName, wireMockRule.getPort());
     }
 
     @Override

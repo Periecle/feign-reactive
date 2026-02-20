@@ -1,11 +1,11 @@
 package reactivefeign.webclient.core;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import feign.RequestLine;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
+import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
 import reactivefeign.ReactiveFeignBuilder;
@@ -18,14 +18,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@EnableRuleMigrationSupport
 abstract public class ResponseEntityTest {
 
     public static final String TEST_URL = "call";
-    @Rule
-    public WireMockClassRule wireMockRule = new WireMockClassRule(WireMockConfiguration.wireMockConfig().dynamicPort());
+    @RegisterExtension
+    public static WireMockExtension wireMockRule = WireMockExtension.newInstance().options(wireMockConfig().dynamicPort()).build();
 
     abstract protected <T> ReactiveFeignBuilder<T> builder();
 
@@ -38,7 +41,7 @@ abstract public class ResponseEntityTest {
                         .withBody("[1, 2]")));
 
         TestCaller client = this.<TestCaller>builder()
-                .target(TestCaller.class, "http://localhost:" + wireMockRule.port());
+                .target(TestCaller.class, "http://localhost:" + wireMockRule.getPort());
 
         Mono<ResponseEntity<Flux<Integer>>> result = client.call();
 
@@ -61,7 +64,7 @@ abstract public class ResponseEntityTest {
                         .withBody("[1, 2]")));
 
         TestCaller client = this.<TestCaller>builder()
-                .target(TestCaller.class, "http://localhost:" + wireMockRule.port());
+                .target(TestCaller.class, "http://localhost:" + wireMockRule.getPort());
 
         Mono<ResponseEntity<Mono<byte[]>>> resultRaw = client.callRaw();
 
@@ -73,10 +76,11 @@ abstract public class ResponseEntityTest {
                 .verifyComplete();
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void shouldFailIfNonReactiveParameterInResponseEntity() {
+      assertThrows(IllegalArgumentException.class, () ->
         this.<WrongCaller>builder()
-                .target(WrongCaller.class, "http://localhost:" + wireMockRule.port());
+                .target(WrongCaller.class, "http://localhost:" + wireMockRule.getPort()));
     }
 
     public interface TestCaller {

@@ -13,49 +13,45 @@
  */
 package reactivefeign.rx2;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 import reactivefeign.ReactiveFeign;
 import reactivefeign.rx2.testcase.IcecreamServiceApi;
 import reactivefeign.rx2.testcase.IcecreamServiceApiBroken;
 
-import static org.hamcrest.Matchers.containsString;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Sergii Karpenko
  */
 
-public class ContractTest {
-
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
+class ContractTest {
 
   protected <T> ReactiveFeign.Builder<T> builder(){
     return Rx2ReactiveFeign.builder();
   }
 
   @Test
-  public void shouldFailOnBrokenContract() {
+  void shouldFailOnBrokenContract() {
 
-    expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage(containsString("Broken Contract"));
+    Throwable exception = assertThrows(IllegalArgumentException.class, () ->
 
-    this.<IcecreamServiceApi>builder()
-        .contract(targetType -> {
-          throw new IllegalArgumentException("Broken Contract");
-        })
-        .target(IcecreamServiceApi.class, "http://localhost:8888");
+      this.<IcecreamServiceApi>builder()
+              .contract(targetType -> {
+                throw new IllegalArgumentException("Broken Contract");
+              })
+              .target(IcecreamServiceApi.class, "http://localhost:8888"));
+    assertTrue(exception.getMessage().contains("Broken Contract"));
   }
 
   @Test
-  public void shouldFailIfNotReactiveContract() {
+  void shouldFailIfNotReactiveContract() {
 
-    expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage(containsString("IcecreamServiceApiBroken#findOrder(int)"));
+    Throwable exception = assertThrows(IllegalArgumentException.class, () ->
 
-    this.<IcecreamServiceApiBroken>builder()
-        .target(IcecreamServiceApiBroken.class, "http://localhost:8888");
+      this.<IcecreamServiceApiBroken>builder()
+              .target(IcecreamServiceApiBroken.class, "http://localhost:8888"));
+    assertTrue(exception.getMessage().contains("IcecreamServiceApiBroken#findOrder(int)"));
   }
 
 }

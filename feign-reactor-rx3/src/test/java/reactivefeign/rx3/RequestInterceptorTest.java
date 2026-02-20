@@ -14,11 +14,11 @@
 package reactivefeign.rx3;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import feign.FeignException;
 import io.reactivex.rxjava3.observers.TestObserver;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.Test;
 import reactivefeign.ReactiveFeign;
 import reactivefeign.rx3.testcase.IcecreamServiceApi;
 import reactivefeign.rx3.testcase.domain.IceCreamOrder;
@@ -37,9 +37,8 @@ import static reactivefeign.utils.HttpStatus.SC_UNAUTHORIZED;
  */
 public class RequestInterceptorTest {
 
-  @ClassRule
-  public static WireMockClassRule wireMockRule = new WireMockClassRule(
-      wireMockConfig().dynamicPort());
+  @RegisterExtension
+  public static WireMockExtension wireMockRule = WireMockExtension.newInstance().options(wireMockConfig().dynamicPort()).build();
 
   protected ReactiveFeign.Builder<IcecreamServiceApi> builder(){
     return Rx3ReactiveFeign.builder();
@@ -67,7 +66,7 @@ public class RequestInterceptorTest {
         .setPriority(1);
 
     IcecreamServiceApi clientWithoutAuth = builder()
-        .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.port());
+        .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.getPort());
 
     TestObserver<IceCreamOrder> testObserver = clientWithoutAuth.findFirstOrder().test().await();
     assertError(testObserver, FeignException.class);
@@ -75,7 +74,7 @@ public class RequestInterceptorTest {
     IcecreamServiceApi clientWithAuth = builder()
         .addRequestInterceptor(addHeaders(singletonList(new Pair<>("Authorization", "Bearer mytoken123"))))
         .target(IcecreamServiceApi.class,
-            "http://localhost:" + wireMockRule.port());
+            "http://localhost:" + wireMockRule.getPort());
 
     testObserver = clientWithAuth.findFirstOrder().test().await();
     assertValue(testObserver, equalsComparingFieldByFieldRecursivelyRx(orderGenerated));

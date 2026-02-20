@@ -15,12 +15,14 @@ package reactivefeign.resttemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.awaitility.core.ConditionTimeoutException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import reactivefeign.ReactiveFeign;
 import reactivefeign.resttemplate.client.RestTemplateFakeReactiveFeign;
 import reactivefeign.testcase.IcecreamServiceApi;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class ReactivityTest extends reactivefeign.ReactivityTest {
 
@@ -29,10 +31,11 @@ public class ReactivityTest extends reactivefeign.ReactivityTest {
     return RestTemplateFakeReactiveFeign.builder();
   }
 
-  @Test(expected = ConditionTimeoutException.class)
+  @Test
   @Override
   public void shouldRunReactively() throws JsonProcessingException {
-    super.shouldRunReactively();
+    assertThrows(ConditionTimeoutException.class, () ->
+      super.shouldRunReactively());
   }
 
   //to not detect blocking calls

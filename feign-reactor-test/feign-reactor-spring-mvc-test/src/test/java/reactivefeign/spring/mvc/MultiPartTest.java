@@ -1,8 +1,7 @@
 package reactivefeign.spring.mvc;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.reactive.ReactiveSecurityAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.reactive.ReactiveUserDetailsServiceAutoConfiguration;
@@ -23,7 +22,6 @@ import org.springframework.format.support.DefaultFormattingConversionService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.Part;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.bind.annotation.*;
 import reactivefeign.BaseReactorTest;
 import reactivefeign.webclient.WebReactiveFeign;
@@ -38,7 +36,6 @@ import java.util.Map;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(
         properties = {"spring.main.web-application-type=reactive"},
         classes = {MultiPartTest.TestController.class, MultiPartTest.TestConfiguration.class},
@@ -51,7 +48,7 @@ public class MultiPartTest extends BaseReactorTest {
     @LocalServerPort
     protected int port;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         client = WebReactiveFeign.<MultipartClient>builder()
                 .decode404()

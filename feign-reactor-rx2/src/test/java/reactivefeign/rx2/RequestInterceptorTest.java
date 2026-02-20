@@ -13,11 +13,11 @@
  */
 package reactivefeign.rx2;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import feign.FeignException;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import reactivefeign.ReactiveFeign;
 import reactivefeign.rx2.testcase.IcecreamServiceApi;
 import reactivefeign.rx2.testcase.domain.IceCreamOrder;
@@ -25,7 +25,6 @@ import reactivefeign.rx2.testcase.domain.OrderGenerator;
 import reactivefeign.utils.Pair;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static java.util.Collections.singletonList;
 import static reactivefeign.client.ReactiveHttpRequestInterceptors.addHeaders;
 import static reactivefeign.rx2.TestUtils.equalsComparingFieldByFieldRecursivelyRx;
@@ -36,16 +35,16 @@ import static reactivefeign.utils.HttpStatus.SC_UNAUTHORIZED;
  */
 public class RequestInterceptorTest {
 
-  @ClassRule
-  public static WireMockClassRule wireMockRule = new WireMockClassRule(
-      wireMockConfig().dynamicPort());
+  @RegisterExtension
+  public static WireMockExtension wireMockRule = WireMockExtension.newInstance().options(WireMockConfiguration.wireMockConfig()
+          .dynamicPort()).build();
 
   protected ReactiveFeign.Builder<IcecreamServiceApi> builder(){
     return Rx2ReactiveFeign.builder();
   }
 
   @Test
-  public void shouldInterceptRequestAndSetAuthHeader() throws JsonProcessingException, InterruptedException {
+  void shouldInterceptRequestAndSetAuthHeader() throws Exception {
 
     String orderUrl = "/icecream/orders/1";
 
@@ -66,7 +65,7 @@ public class RequestInterceptorTest {
         .setPriority(1);
 
     IcecreamServiceApi clientWithoutAuth = builder()
-        .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.port());
+        .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.getPort());
 
     clientWithoutAuth.findFirstOrder().test()
             .await()
@@ -76,7 +75,7 @@ public class RequestInterceptorTest {
     IcecreamServiceApi clientWithAuth = builder()
         .addRequestInterceptor(addHeaders(singletonList(new Pair<>("Authorization", "Bearer mytoken123"))))
         .target(IcecreamServiceApi.class,
-            "http://localhost:" + wireMockRule.port());
+            "http://localhost:" + wireMockRule.getPort());
 
     clientWithAuth.findFirstOrder().test()
             .await()

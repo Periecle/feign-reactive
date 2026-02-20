@@ -18,9 +18,9 @@ package reactivefeign.cloud2;
 
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.timelimiter.TimeLimiterRegistry;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.reactive.ReactiveSecurityAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.reactive.ReactiveUserDetailsServiceAutoConfiguration;
@@ -34,6 +34,8 @@ import org.springframework.test.context.ActiveProfiles;
 import reactivefeign.allfeatures.AllFeaturesApi;
 import reactivefeign.allfeatures.AllFeaturesController;
 import reactivefeign.allfeatures.AllFeaturesFeign;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * @author Sergii Karpenko
@@ -53,7 +55,7 @@ public class AllFeaturesTest extends reactivefeign.allfeatures.AllFeaturesTest {
 	private static ReactiveLoadBalancer.Factory<ServiceInstance> loadBalancerFactory;
 	private static ReactiveCircuitBreakerFactory circuitBreakerFactory;
 
-	@BeforeClass
+	@BeforeAll
 	public static void setupServersList() {
 		loadBalancerFactory = LoadBalancingReactiveHttpClientTest.loadBalancerFactory(serviceName, 8080);
 		circuitBreakerFactory = new ReactiveResilience4JCircuitBreakerFactory(
@@ -75,20 +77,22 @@ public class AllFeaturesTest extends reactivefeign.allfeatures.AllFeaturesTest {
 		throw new UnsupportedOperationException();
 	}
 
-	@Test(expected = NoFallbackAvailableException.class)
-	public void shouldFailIfNoSubstitutionForPath(){
-		super.shouldFailIfNoSubstitutionForPath();
-	}
+	@Test
+	public void shouldFailIfNoSubstitutionForPath() {
+    assertThrows(NoFallbackAvailableException.class, () ->
+      client.urlNotSubstituted()
+              .subscribeOn(testScheduler()).block());
+  }
 
 	//Netty's WebClient is not able to do this trick
-	@Ignore
+	@Disabled
 	@Test
 	@Override
 	public void shouldReturnFirstResultBeforeSecondSent() {
 	}
 
 	//WebClient is not able to do this
-	@Ignore
+	@Disabled
 	@Test
 	@Override
 	public void shouldMirrorStringStreamBody() {

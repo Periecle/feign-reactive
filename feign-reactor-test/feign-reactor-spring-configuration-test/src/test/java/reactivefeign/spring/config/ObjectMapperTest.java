@@ -21,18 +21,16 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.stubbing.ServeEvent;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import reactor.core.publisher.Mono;
@@ -50,7 +48,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Tests ReactiveFeign built on Spring Mvc annotations.
  */
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(classes = ObjectMapperTest.TestConfiguration.class,
 		webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @DirtiesContext
@@ -99,19 +96,19 @@ public class ObjectMapperTest {
 		assertThat(proxyEvents.get(0).getRequest().getBodyAsString()).contains("field_with_good_name");
 	}
 
-	@BeforeClass
+	@BeforeAll
 	public static void setup() {
 		mockHttpServer.start();
 
 		System.setProperty(MOCK_SERVER_PORT_PROPERTY, Integer.toString(mockHttpServer.port()));
 	}
 
-	@Before
+	@BeforeEach
 	public void before(){
 		mockHttpServer.resetAll();
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void teardown() {
 		mockHttpServer.stop();
 	}

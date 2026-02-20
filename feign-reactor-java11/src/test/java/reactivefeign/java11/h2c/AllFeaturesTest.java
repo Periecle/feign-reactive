@@ -16,8 +16,8 @@
 
 package reactivefeign.java11.h2c;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.reactive.ReactiveSecurityAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.reactive.ReactiveUserDetailsServiceAutoConfiguration;
@@ -57,20 +57,20 @@ public class AllFeaturesTest extends AllFeaturesFeignTest {
 	}
 
 	//Java 11 HttpClient is not able to do this trick
-	@Ignore
+	@Disabled
 	@Override
 	@Test
 	public void shouldReturnFirstResultBeforeSecondSent() {}
 
 	//Java 11 HttpClient is not able to do this
-	@Ignore
+	@Disabled
 	@Test
 	@Override
 	public void shouldMirrorStringStreamBody() {
 	}
 
 	//TODO Check later
-	@Ignore
+	@Disabled
 	@Test
 	@Override
 	public void shouldEncodePathParamWithReservedChars() {

@@ -15,13 +15,12 @@
 package reactivefeign;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import feign.Target;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import reactivefeign.client.ReadTimeoutException;
 import reactivefeign.client.metrics.MetricsTag;
 import reactivefeign.client.metrics.MicrometerReactiveLogger;
@@ -36,9 +35,11 @@ import java.util.EnumSet;
 import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static reactivefeign.client.metrics.MetricsTag.FEIGN_CLIENT_METHOD;
 import static reactivefeign.client.metrics.MicrometerReactiveLogger.DEFAULT_TIMER_NAME;
 
@@ -47,11 +48,11 @@ import static reactivefeign.client.metrics.MicrometerReactiveLogger.DEFAULT_TIME
  */
 abstract public class MetricsTest extends BaseReactorTest {
 
-  @ClassRule
-  public static WireMockClassRule wireMockRule = new WireMockClassRule(
-          WireMockConfiguration.wireMockConfig()
-                  .asynchronousResponseEnabled(true)
-                  .dynamicPort());
+  @RegisterExtension
+  public static WireMockExtension wireMockRule = WireMockExtension.newInstance().options(wireMockConfig()
+          .asynchronousResponseEnabled(true)
+          .dynamicPort()
+  ).build();
 
   private SimpleMeterRegistry meterRegistry;
 
@@ -59,12 +60,12 @@ abstract public class MetricsTest extends BaseReactorTest {
 
   protected Target<IcecreamServiceApi> target(){
     return new Target.HardCodedTarget<>(IcecreamServiceApi.class,
-            "http://"+getHost()+":" + wireMockRule.port());
+            "http://"+getHost()+":" + wireMockRule.getPort());
   }
 
   abstract protected ReactiveFeignBuilder<IcecreamServiceApi> builder(long readTimeoutInMillis);
 
-  @Before
+  @BeforeEach
   public void setUp(){
     meterRegistry = new SimpleMeterRegistry();
   }
@@ -135,34 +136,36 @@ abstract public class MetricsTest extends BaseReactorTest {
 
   }
 
-  @Test(expected = Exception.class)
+  @Test
   public void shouldLogTimeout() {
+    assertThrows(Exception.class, () -> {
 
-    int readTimeoutInMillis = 100;
-    wireMockRule.stubFor(get(urlEqualTo("/ping"))
-            .willReturn(aResponse()
-                    .withFixedDelay(readTimeoutInMillis * 2)
-                    .withStatus(200)
-                    .withHeader("Content-Type", "application/json")));
+      int readTimeoutInMillis = 100;
+      wireMockRule.stubFor(get(urlEqualTo("/ping"))
+              .willReturn(aResponse()
+                      .withFixedDelay(readTimeoutInMillis * 2)
+                      .withStatus(200)
+                      .withHeader("Content-Type", "application/json")));
 
-    IcecreamServiceApi client = builder(readTimeoutInMillis)
-            .addLoggerListener(buildLoggerListener())
-            .target(IcecreamServiceApi.class,
-                    "http://" + getHost() + ":" + wireMockRule.port());
+      IcecreamServiceApi client = builder(readTimeoutInMillis)
+              .addLoggerListener(buildLoggerListener())
+              .target(IcecreamServiceApi.class,
+                      "http://" + getHost() + ":" + wireMockRule.getPort());
 
-    try {
-      client.ping().subscribeOn(testScheduler()).block();
-      fail("should throw ReadTimeoutException");
-    }
-    catch (Exception e) {
-      assertThat(meterRegistry.get(DEFAULT_TIMER_NAME)
-              .tags(MetricsTag.EXCEPTION.getTagName(), ReadTimeoutException.class.getSimpleName())
-              .timer().count()).isEqualTo(1L);
-      assertThat(meterRegistry.get(DEFAULT_TIMER_NAME)
-              .tags(MetricsTag.STATUS.getTagName(), "-1")
-              .timer().count()).isEqualTo(1L);
-      throw e;
-    }
+      try {
+        client.ping().subscribeOn(testScheduler()).block();
+        fail("should throw ReadTimeoutException");
+      }
+      catch (Exception e) {
+        assertThat(meterRegistry.get(DEFAULT_TIMER_NAME)
+                .tags(MetricsTag.EXCEPTION.getTagName(), ReadTimeoutException.class.getSimpleName())
+                .timer().count()).isEqualTo(1L);
+        assertThat(meterRegistry.get(DEFAULT_TIMER_NAME)
+                .tags(MetricsTag.STATUS.getTagName(), "-1")
+                .timer().count()).isEqualTo(1L);
+        throw e;
+      }
+    });
   }
 
   private MicrometerReactiveLogger buildLoggerListener() {

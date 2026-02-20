@@ -1,17 +1,15 @@
 package reactivefeign.spring.config.cloud2;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import reactivefeign.spring.config.EnableReactiveFeignClients;
@@ -27,7 +25,6 @@ import static java.util.Arrays.asList;
 import static reactivefeign.spring.config.cloud2.BasicAutoconfigurationTest.MOCK_SERVER_PORT_PROPERTY;
 import static reactivefeign.spring.config.cloud2.QualifierTest.RFGN_PROPS;
 
-@RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = QualifierTest.TestConfiguration.class, webEnvironment = SpringBootTest.WebEnvironment.NONE,
         properties = {
                 "spring.cloud.discovery.client.simple.instances."+RFGN_PROPS+"[0].uri=http://localhost:${"+ MOCK_SERVER_PORT_PROPERTY+"}",
@@ -55,11 +52,10 @@ public class QualifierTest extends BasicAutoconfigurationTest{
                         .withFixedDelay(300)
                         .withBody("OK")));
 
-        asList(propsSampleClient, propsSampleClientWithOtherQualifier).forEach(feignClient -> {
+        asList(propsSampleClient, propsSampleClientWithOtherQualifier).forEach(feignClient ->
             StepVerifier.create(feignClient.sampleMethod())
                     .expectNext("OK")
-                    .verifyComplete();
-        });
+                    .verifyComplete());
     }
 
     @ReactiveFeignClient(name = RFGN_PROPS, qualifier = "FeignClient1")
@@ -88,20 +84,20 @@ public class QualifierTest extends BasicAutoconfigurationTest{
     protected static class TestConfiguration {
     }
 
-    @BeforeClass
+    @BeforeAll
     public static void setupStubs() {
         mockHttpServer.start();
 
         System.setProperty(MOCK_SERVER_PORT_PROPERTY, Integer.toString(mockHttpServer.port()));
     }
 
-    @Before
+    @BeforeEach
     public void reset() throws InterruptedException {
         //to close circuit breaker
         mockHttpServer.resetAll();
     }
 
-    @AfterClass
+    @AfterAll
     public static void teardown() {
         mockHttpServer.stop();
     }
