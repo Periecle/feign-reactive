@@ -15,8 +15,10 @@ package reactivefeign.java11.h2c;
 
 import com.fasterxml.jackson.core.io.JsonEOFException;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import org.junit.Ignore;
-import org.junit.Test;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import reactivefeign.ReactiveFeign;
 
 import java.util.function.Predicate;
@@ -30,9 +32,16 @@ import static reactivefeign.wiremock.WireMockServerConfigurations.h2cConfig;
  */
 public class BasicFeaturesTest extends reactivefeign.BasicFeaturesTest {
 
-  @Override
-  protected WireMockConfiguration wireMockConfig(){
+  @RegisterExtension
+  public static WireMockExtension wireMockRule = WireMockExtension.newInstance().options(wireMockConfig().dynamicPort()).build();
+
+  protected static WireMockConfiguration wireMockConfig(){
     return h2cConfig(true, CALLS_NUMBER);
+  }
+
+  @Override
+  public WireMockExtension getWiremockRule() {
+    return wireMockRule;
   }
 
   @Override
@@ -45,7 +54,7 @@ public class BasicFeaturesTest extends reactivefeign.BasicFeaturesTest {
     return throwable -> throwable instanceof JsonEOFException;
   }
 
-  @Ignore
+  @Disabled
   @Override
   @Test
   public void shouldExpandUrlWithBaseUriForEmptyTarget() {

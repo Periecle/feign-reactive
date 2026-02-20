@@ -1,35 +1,42 @@
 package reactivefeign;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import reactivefeign.methodhandler.DefaultMethodHandler;
 import reactor.core.publisher.Mono;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class DefaultMethodHandlerTest extends BaseReactorTest {
 
-    @Test(expected = AbstractMethodError.class)
+    @Test
     public void shouldThrowErrorOnNotDefaultMethod() throws NoSuchMethodException {
+      assertThrows(AbstractMethodError.class, () -> {
         new DefaultMethodHandler(TestInterface.class.getMethod("notDefaultMethod"));
+      });
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void shouldFailIfNotBoundToProxy() throws Throwable {
+      assertThrows(IllegalStateException.class, () -> {
         DefaultMethodHandler defaultMethodHandler
                 = new DefaultMethodHandler(TestInterface.class.getMethod("defaultMethod"));
         defaultMethodHandler.invoke(new Object[0]);
+      });
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void shouldFailOnRebind() throws Throwable {
+      assertThrows(IllegalStateException.class, () -> {
         DefaultMethodHandler defaultMethodHandler
                 = new DefaultMethodHandler(TestInterface.class.getMethod("defaultMethod"));
 
-        TestInterface mockImplementation = mock(TestInterface.class);
-        defaultMethodHandler.bindTo(mockImplementation);
-        defaultMethodHandler.bindTo(mockImplementation);
+        TestInterface impl = () -> Mono.empty();
+        defaultMethodHandler.bindTo(impl);
+        defaultMethodHandler.bindTo(impl);
+      });
     }
 
     @Test
@@ -37,14 +44,17 @@ public class DefaultMethodHandlerTest extends BaseReactorTest {
         DefaultMethodHandler defaultMethodHandler
                 = new DefaultMethodHandler(TestInterface.class.getMethod("defaultMethod"));
 
-        TestInterface mockImplementation = mock(TestInterface.class);
-        when(mockImplementation.defaultMethod()).thenCallRealMethod();
+        AtomicBoolean notDefaultMethodCalled = new AtomicBoolean(false);
+        TestInterface impl = () -> {
+            notDefaultMethodCalled.set(true);
+            return Mono.empty();
+        };
 
-        defaultMethodHandler.bindTo(mockImplementation);
+        defaultMethodHandler.bindTo(impl);
 
         defaultMethodHandler.invoke(new Object[0]);
 
-        verify(mockImplementation).notDefaultMethod();
+        assertTrue(notDefaultMethodCalled.get());
     }
 
     interface TestInterface {

@@ -14,9 +14,9 @@
 package reactivefeign;
 
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import reactivefeign.testcase.IcecreamServiceApi;
 import reactor.test.StepVerifier;
 
@@ -28,13 +28,12 @@ import static reactivefeign.utils.HttpStatus.SC_NOT_FOUND;
  */
 public abstract class NotFoundTest extends BaseReactorTest {
 
-  @Rule
-  public WireMockClassRule wireMockRule = new WireMockClassRule(
-      wireMockConfig().dynamicPort());
+  @RegisterExtension
+  public static WireMockExtension wireMockRule = WireMockExtension.newInstance().options(wireMockConfig().dynamicPort()).build();
 
   abstract protected ReactiveFeignBuilder<IcecreamServiceApi> builder();
 
-  protected WireMockConfiguration wireMockConfig(){
+  protected static WireMockConfiguration wireMockConfig(){
     return WireMockConfiguration.wireMockConfig();
   }
 
@@ -48,7 +47,7 @@ public abstract class NotFoundTest extends BaseReactorTest {
 
     IcecreamServiceApi client = builder()
         .decode404()
-        .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.port());
+        .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.getPort());
 
     StepVerifier.create(client.findOrder(2).subscribeOn(testScheduler()))
         .expectNextCount(0)

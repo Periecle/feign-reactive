@@ -14,15 +14,27 @@
 package reactivefeign.java11.h1;
 
 import com.fasterxml.jackson.core.io.JsonEOFException;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import reactivefeign.ReactiveFeign;
 import reactivefeign.java11.Java11ReactiveFeign;
 
 import java.util.function.Predicate;
 
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+
 /**
  * @author Sergii Karpenko
  */
 public class BasicFeaturesTest extends reactivefeign.BasicFeaturesTest {
+
+  @RegisterExtension
+  public static WireMockExtension wireMockRule = WireMockExtension.newInstance().options(wireMockConfig().dynamicPort()).build();
+
+  @Override
+  public WireMockExtension getWiremockRule() {
+    return wireMockRule;
+  }
 
   @Override
   protected <T> ReactiveFeign.Builder<T> builder() {

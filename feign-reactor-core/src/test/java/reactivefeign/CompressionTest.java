@@ -16,9 +16,9 @@ package reactivefeign;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.tomakehurst.wiremock.common.Gzip;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import reactivefeign.testcase.IcecreamServiceApi;
 import reactivefeign.testcase.domain.Bill;
 import reactivefeign.testcase.domain.IceCreamOrder;
@@ -38,15 +38,7 @@ import static reactivefeign.TestUtils.equalsComparingFieldByFieldRecursively;
 
 abstract public class CompressionTest extends BaseReactorTest{
 
-  @Rule
-  public WireMockClassRule wireMockRule = new WireMockClassRule(
-      wireMockConfig().dynamicPort());
-
   abstract protected ReactiveFeignBuilder<IcecreamServiceApi> builder(boolean tryUseCompression);
-
-  protected WireMockConfiguration wireMockConfig(){
-    return WireMockConfiguration.wireMockConfig();
-  }
 
   @Test
   public void testCompression() throws JsonProcessingException {
@@ -54,7 +46,7 @@ abstract public class CompressionTest extends BaseReactorTest{
     IceCreamOrder order = new OrderGenerator().generate(20);
     Bill billExpected = Bill.makeBill(order);
 
-    wireMockRule.stubFor(post(urlEqualTo("/icecream/orders"))
+    getWiremockRule().stubFor(post(urlEqualTo("/icecream/orders"))
         .withHeader("Accept-Encoding", containing("gzip"))
         .withRequestBody(equalTo(TestUtils.MAPPER.writeValueAsString(order)))
         .willReturn(aResponse().withStatus(200)
@@ -63,11 +55,13 @@ abstract public class CompressionTest extends BaseReactorTest{
             .withBody(Gzip.gzip(TestUtils.MAPPER.writeValueAsString(billExpected)))));
 
     IcecreamServiceApi client = builder(true)
-                .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.port());
+                .target(IcecreamServiceApi.class, "http://localhost:" + getWiremockRule().getPort());
 
     Mono<Bill> bill = client.makeOrder(order);
     StepVerifier.create(bill.subscribeOn(testScheduler()))
         .expectNextMatches(equalsComparingFieldByFieldRecursively(billExpected))
         .verifyComplete();
   }
+
+  public abstract WireMockExtension getWiremockRule();
 }

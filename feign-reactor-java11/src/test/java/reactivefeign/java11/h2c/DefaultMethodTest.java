@@ -14,6 +14,8 @@
 package reactivefeign.java11.h2c;
 
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import reactivefeign.ReactiveFeign;
 import reactivefeign.testcase.IcecreamServiceApi;
 
@@ -27,9 +29,24 @@ import static reactivefeign.wiremock.WireMockServerConfigurations.h2cConfig;
  */
 public class DefaultMethodTest extends reactivefeign.DefaultMethodTest {
 
-  @Override
-  protected WireMockConfiguration wireMockConfig(){
+  @RegisterExtension
+  public static WireMockExtension wireMockRule = WireMockExtension.newInstance().options(wireMockConfig().dynamicPort()).build();
+
+  @RegisterExtension
+  public static WireMockExtension wireMockRule2 = WireMockExtension.newInstance().options(wireMockConfig().dynamicPort()).build();
+
+  protected static WireMockConfiguration wireMockConfig(){
     return h2cConfig(true, CALLS_NUMBER);
+  }
+
+  @Override
+  public WireMockExtension getWiremockRule() {
+    return wireMockRule;
+  }
+
+  @Override
+  public WireMockExtension getWiremockRule2() {
+    return wireMockRule2;
   }
 
   @Override

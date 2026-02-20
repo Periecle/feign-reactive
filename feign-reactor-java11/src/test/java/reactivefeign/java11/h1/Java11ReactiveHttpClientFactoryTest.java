@@ -3,7 +3,8 @@ package reactivefeign.java11.h1;
 import com.fasterxml.jackson.core.async_.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.Target;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.exceptions.base.MockitoException;
 import reactivefeign.java11.Java11ReactiveOptions;
 import reactivefeign.java11.client.Java11ReactiveHttpClientFactory;
 
@@ -12,13 +13,20 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.Mockito.*;
 
 public class Java11ReactiveHttpClientFactoryTest {
 
     @Test
     public void shouldMakePreliminaryCallToUpgradeToHttp2() throws IOException, InterruptedException {
-        HttpClient httpClient = mock(HttpClient.class);
+        HttpClient httpClient;
+        try {
+            httpClient = mock(HttpClient.class);
+        } catch (MockitoException e) {
+            assumeTrue(false, "Mockito cannot mock HttpClient on this JDK: " + e.getMessage());
+            return;
+        }
         when(httpClient.version()).thenReturn(HttpClient.Version.HTTP_2);
 
         Target mock = mock(Target.class);

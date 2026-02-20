@@ -14,14 +14,12 @@
 package reactivefeign.rx3;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import reactivefeign.ReactiveFeign;
 import reactivefeign.rx3.testcase.IcecreamServiceApi;
 import reactivefeign.rx3.testcase.domain.Bill;
@@ -45,11 +43,10 @@ import static reactivefeign.rx3.TestUtils.assertValue;
 
 public class SmokeTest {
 
-  @ClassRule
-  public static WireMockClassRule wireMockRule = new WireMockClassRule(
-      wireMockConfig().dynamicPort());
+  @RegisterExtension
+  public static WireMockExtension wireMockRule = WireMockExtension.newInstance().options(wireMockConfig().dynamicPort()).build();
 
-  @Before
+  @BeforeEach
   public void resetServers() {
     wireMockRule.resetAll();
   }
@@ -64,12 +61,9 @@ public class SmokeTest {
   private Map<Integer, IceCreamOrder> orders = generator.generateRange(10).stream()
       .collect(Collectors.toMap(IceCreamOrder::getId, o -> o));
 
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
-
-  @Before
+  @BeforeEach
   public void setUp() {
-    String targetUrl = "http://localhost:" + wireMockRule.port();
+    String targetUrl = "http://localhost:" + wireMockRule.getPort();
     client = builder()
         .decode404()
         .target(IcecreamServiceApi.class, targetUrl);

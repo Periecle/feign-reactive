@@ -25,8 +25,7 @@ import static reactivefeign.wiremock.WireMockServerConfigurations.h2cConfig;
  */
 public class SmokeTest extends reactivefeign.SmokeTest {
 
-  @Override
-  protected WireMockConfiguration wireMockConfig(){
+  protected static WireMockConfiguration wireMockConfig(){
     return h2cConfig();
   }
 

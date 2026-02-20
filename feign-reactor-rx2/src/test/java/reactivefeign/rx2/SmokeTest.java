@@ -13,14 +13,12 @@
  */
 package reactivefeign.rx2;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import io.reactivex.Single;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import reactivefeign.ReactiveFeign;
 import reactivefeign.rx2.testcase.IcecreamServiceApi;
 import reactivefeign.rx2.testcase.domain.Bill;
@@ -33,7 +31,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.assertj.core.api.Assertions.assertThat;
 import static reactivefeign.rx2.TestUtils.equalsComparingFieldByFieldRecursively;
 import static reactivefeign.rx2.TestUtils.equalsComparingFieldByFieldRecursivelyRx;
@@ -44,12 +41,12 @@ import static reactivefeign.rx2.TestUtils.equalsComparingFieldByFieldRecursively
 
 public class SmokeTest {
 
-  @ClassRule
-  public static WireMockClassRule wireMockRule = new WireMockClassRule(
-      wireMockConfig().dynamicPort());
+  @RegisterExtension
+  public static WireMockExtension wireMockRule = WireMockExtension.newInstance().options(WireMockConfiguration.wireMockConfig()
+          .dynamicPort()).build();
 
-  @Before
-  public void resetServers() {
+  @BeforeEach
+  void resetServers() {
     wireMockRule.resetAll();
   }
 
@@ -63,19 +60,16 @@ public class SmokeTest {
   private Map<Integer, IceCreamOrder> orders = generator.generateRange(10).stream()
       .collect(Collectors.toMap(IceCreamOrder::getId, o -> o));
 
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
-
-  @Before
-  public void setUp() {
-    String targetUrl = "http://localhost:" + wireMockRule.port();
+  @BeforeEach
+  void setUp() {
+    String targetUrl = "http://localhost:" + wireMockRule.getPort();
     client = builder()
         .decode404()
         .target(IcecreamServiceApi.class, targetUrl);
   }
 
   @Test
-  public void testSimpleGet_success() throws JsonProcessingException, InterruptedException {
+  void simpleGetSuccess() throws Exception {
 
     wireMockRule.stubFor(get(urlEqualTo("/icecream/flavors"))
         .willReturn(aResponse().withStatus(200)
@@ -97,7 +91,7 @@ public class SmokeTest {
     }
 
   @Test
-  public void testFindOrder_success() throws JsonProcessingException, InterruptedException {
+  void findOrderSuccess() throws Exception {
     IceCreamOrder orderExpected = orders.get(1);
     wireMockRule.stubFor(get(urlEqualTo("/icecream/orders/1"))
         .willReturn(aResponse().withStatus(200)
@@ -113,7 +107,7 @@ public class SmokeTest {
   }
 
   @Test
-  public void testFindOrder_empty() throws InterruptedException {
+  void findOrderEmpty() throws Exception {
 
     client.findOrder(123).test()
             .await()
@@ -124,7 +118,7 @@ public class SmokeTest {
   }
 
   @Test
-  public void testMakeOrder_success() throws JsonProcessingException {
+  void makeOrderSuccess() throws Exception {
 
     IceCreamOrder order = new OrderGenerator().generate(20);
     Bill billExpected = Bill.makeBill(order);
@@ -141,7 +135,7 @@ public class SmokeTest {
   }
 
   @Test
-  public void testPayBill_success() throws JsonProcessingException {
+  void payBillSuccess() throws Exception {
 
     Bill bill = Bill.makeBill(new OrderGenerator().generate(30));
 

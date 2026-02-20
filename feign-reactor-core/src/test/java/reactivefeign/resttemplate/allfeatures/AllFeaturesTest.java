@@ -16,8 +16,8 @@
 
 package reactivefeign.resttemplate.allfeatures;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.reactive.ReactiveSecurityAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.reactive.ReactiveUserDetailsServiceAutoConfiguration;
@@ -49,32 +49,32 @@ public class AllFeaturesTest extends AllFeaturesFeignTest {
 		return RestTemplateFakeReactiveFeign.builder();
 	}
 
-	@Ignore
+	@Disabled
 	@Test
 	@Override
 	public void shouldMirrorStreamingBinaryBodyReactive(){}
 
-	@Ignore
+	@Disabled
 	@Test
 	@Override
 	public void shouldMirrorBinaryBody(){}
 
-	@Ignore
+	@Disabled
 	@Test
 	@Override
 	public void shouldRunReactively(){}
 
-	@Ignore
+	@Disabled
 	@Test
 	@Override
 	public void shouldReturnFirstResultBeforeSecondSent(){}
 
-	@Ignore
+	@Disabled
 	@Test
 	@Override
 	public void shouldMirrorStringStreamBody() {}
 
-	@Ignore
+	@Disabled
 	@Test
 	@Override
 	public void shouldMirrorIntegerStreamBody() {}

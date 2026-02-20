@@ -12,17 +12,14 @@
 package reactivefeign;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import feign.Headers;
 import feign.Param;
 import feign.QueryMap;
 import feign.RequestLine;
 import feign.Target;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.web.client.RestClientException;
 import reactivefeign.client.ReactiveHttpResponse;
 import reactor.core.publisher.Flux;
@@ -55,25 +52,17 @@ import static reactivefeign.TestUtils.toLowerCaseKeys;
 
 abstract public class BasicFeaturesTest extends BaseReactorTest {
 
-  @Rule
-  public WireMockClassRule wireMockRule = new WireMockClassRule(wireMockConfig());
-
   abstract protected <T> ReactiveFeignBuilder<T> builder();
 
-  protected WireMockConfiguration wireMockConfig(){
-    return WireMockConfiguration.wireMockConfig().dynamicPort();
-  }
+  public abstract WireMockExtension getWiremockRule();
 
   protected int wireMockPort(){
-    return wireMockRule.port();
+    return getWiremockRule().getPort();
   }
 
   protected TestClient client;
 
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
-
-  @Before
+  @BeforeEach
   public void setUp() {
     String targetUrl = getTargetUrl();
     client = this.<TestClient>builder()
@@ -88,7 +77,7 @@ abstract public class BasicFeaturesTest extends BaseReactorTest {
   @Test
   public void shouldFailOnCorruptedJson() {
 
-    wireMockRule.stubFor(get(urlEqualTo("/corruptedJson"))
+    getWiremockRule().stubFor(get(urlEqualTo("/corruptedJson"))
             .willReturn(aResponse().withStatus(200)
                     .withHeader("Content-Type", "application/json")
                     .withBody("{\"corrupted ! json")));
@@ -132,7 +121,7 @@ abstract public class BasicFeaturesTest extends BaseReactorTest {
     Map<String, Object> response = MAPPER.readValue(responseJson, Map.class);
 
 
-    wireMockRule.stubFor(post(urlEqualTo("/genericJson"))
+    getWiremockRule().stubFor(post(urlEqualTo("/genericJson"))
             .withRequestBody(equalTo(requestJson))
             .willReturn(aResponse().withStatus(200)
                     .withHeader("Content-Type", "application/json")
@@ -148,7 +137,7 @@ abstract public class BasicFeaturesTest extends BaseReactorTest {
   public void shouldPassResponseAsIs() throws JsonProcessingException {
 
     List<TestObject> testObjects = asList(new TestObject(1), new TestObject(2));
-    wireMockRule.stubFor(get(urlEqualTo("/reactiveHttpResponse"))
+    getWiremockRule().stubFor(get(urlEqualTo("/reactiveHttpResponse"))
             .willReturn(aResponse().withStatus(200)
                     .withHeader("Content-Type", "application/json")
                     .withHeader("header1", "value1")
@@ -177,7 +166,7 @@ abstract public class BasicFeaturesTest extends BaseReactorTest {
 
     TestObject testObject = new TestObject(1);
     String json = MAPPER.writeValueAsString(testObject);
-    wireMockRule.stubFor(post(urlEqualTo("/expand"))
+    getWiremockRule().stubFor(post(urlEqualTo("/expand"))
             .withRequestBody(equalTo(json))
             .willReturn(aResponse().withStatus(200)
                     .withHeader("Content-Type", "application/json")
@@ -197,7 +186,7 @@ abstract public class BasicFeaturesTest extends BaseReactorTest {
 
     String queryParameter = "queryParameter";
     String value = "1";
-    wireMockRule.stubFor(post(urlEqualTo("/queryMap?" + queryParameter + "=" + value))
+    getWiremockRule().stubFor(post(urlEqualTo("/queryMap?" + queryParameter + "=" + value))
             .willReturn(aResponse().withStatus(200)));
 
     StepVerifier.create(client.queryMap(new HashMap<String, Object>(){{put(queryParameter, value);}})
@@ -211,7 +200,7 @@ abstract public class BasicFeaturesTest extends BaseReactorTest {
     String queryParameter = "queryParam";
     String value1 = "1";
     String value2 = "2";
-    wireMockRule.stubFor(get(urlEqualTo("?" + queryParameter + "=" + value1
+    getWiremockRule().stubFor(get(urlEqualTo("?" + queryParameter + "=" + value1
             +"&"+ queryParameter + "=" + value2))
             .willReturn(aResponse().withStatus(200)));
 
@@ -223,7 +212,7 @@ abstract public class BasicFeaturesTest extends BaseReactorTest {
   @Test
   public void shouldExpandPojoToQueryParameters() {
 
-    wireMockRule.stubFor(post(urlEqualTo("/queryPojo?field=1"))
+    getWiremockRule().stubFor(post(urlEqualTo("/queryPojo?field=1"))
             .willReturn(aResponse().withStatus(200)));
 
     StepVerifier.create(client.queryPojo(new TestObject(1))
@@ -236,7 +225,7 @@ abstract public class BasicFeaturesTest extends BaseReactorTest {
 
     String body = "123";
     String contentTypeHeader = "Content-Type";
-    wireMockRule.stubFor(post(urlEqualTo("/passExplicitContentType"))
+    getWiremockRule().stubFor(post(urlEqualTo("/passExplicitContentType"))
             .withRequestBody(equalTo(body))
             .withHeader(contentTypeHeader, equalTo("application/customContentType"))
             .willReturn(aResponse().withStatus(200)));
@@ -245,21 +234,21 @@ abstract public class BasicFeaturesTest extends BaseReactorTest {
                     .subscribeOn(testScheduler()))
             .verifyComplete();
 
-    assertThat(wireMockRule.getAllServeEvents().get(0).getRequest().header(contentTypeHeader).values())
+    assertThat(getWiremockRule().getAllServeEvents().get(0).getRequest().header(contentTypeHeader).values())
             .containsExactly("application/customContentType");
   }
 
   @Test
   public void shouldNotCutTrailingSlash() {
 
-    wireMockRule.stubFor(get(urlEqualTo("/users/1/dogs/"))
+    getWiremockRule().stubFor(get(urlEqualTo("/users/1/dogs/"))
             .willReturn(aResponse().withStatus(200)));
 
     StepVerifier.create(client.keepTrailingSlash(1)
                     .subscribeOn(testScheduler()))
             .verifyComplete();
 
-    assertThat(wireMockRule.getAllServeEvents().get(0).getRequest().getUrl())
+    assertThat(getWiremockRule().getAllServeEvents().get(0).getRequest().getUrl())
             .endsWith("/users/1/dogs/");
   }
 

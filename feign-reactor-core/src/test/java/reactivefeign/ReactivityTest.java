@@ -14,9 +14,9 @@
 package reactivefeign;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import reactivefeign.testcase.IcecreamServiceApi;
 import reactivefeign.testcase.domain.OrderGenerator;
 import reactor.core.publisher.Mono;
@@ -45,7 +45,7 @@ abstract public class ReactivityTest extends BaseReactorTest {
 
   private static DisposableServer server;
 
-  @BeforeClass
+  @BeforeAll
   public static void startServer() throws JsonProcessingException {
     byte[] data = TestUtils.MAPPER.writeValueAsString(new OrderGenerator().generate(1)).getBytes();
 
@@ -60,7 +60,7 @@ abstract public class ReactivityTest extends BaseReactorTest {
             .bindNow();
   }
 
-  @AfterClass
+  @AfterAll
   public static void stopServer(){
     server.disposeNow();
   }

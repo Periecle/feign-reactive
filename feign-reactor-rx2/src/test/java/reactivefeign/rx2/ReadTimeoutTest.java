@@ -13,9 +13,10 @@
  */
 package reactivefeign.rx2;
 
-import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
-import org.junit.ClassRule;
-import org.junit.Test;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import reactivefeign.ReactiveFeign;
 import reactivefeign.ReactiveOptions;
 import reactivefeign.client.ReadTimeoutException;
@@ -23,23 +24,22 @@ import reactivefeign.rx2.testcase.IcecreamServiceApi;
 import reactivefeign.webclient.WebReactiveOptions;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 
 /**
  * @author Sergii Karpenko
  */
 public class ReadTimeoutTest {
 
-  @ClassRule
-  public static WireMockClassRule wireMockRule = new WireMockClassRule(
-      wireMockConfig().dynamicPort());
+  @RegisterExtension
+  public static WireMockExtension wireMockRule = WireMockExtension.newInstance().options(WireMockConfiguration.wireMockConfig()
+          .dynamicPort()).build();
 
   protected ReactiveFeign.Builder<IcecreamServiceApi> builder(ReactiveOptions options){
     return Rx2ReactiveFeign.<IcecreamServiceApi>builder().options(options);
   }
 
   @Test
-  public void shouldFailOnReadTimeout() throws InterruptedException {
+  void shouldFailOnReadTimeout() throws Exception {
 
     String orderUrl = "/icecream/orders/1";
 
@@ -53,7 +53,7 @@ public class ReadTimeoutTest {
             .setConnectTimeoutMillis(300)
             .build())
                 .target(IcecreamServiceApi.class,
-                    "http://localhost:" + wireMockRule.port());
+                    "http://localhost:" + wireMockRule.getPort());
 
     client.findOrder(1).test()
             .await()

@@ -1,11 +1,8 @@
 package reactivefeign.webclient.jetty.allfeatures;
 
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.reactive.ReactiveUserDetailsServiceAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -14,7 +11,6 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.core.io.buffer.DefaultDataBufferFactory;
-import org.springframework.test.context.junit4.SpringRunner;
 import reactivefeign.webclient.jetty.JettyWebReactiveFeign;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
@@ -22,7 +18,6 @@ import reactor.test.StepVerifier;
 import static java.nio.ByteBuffer.wrap;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(
         properties = {"spring.main.web-application-type=reactive"},
         classes = {WebClientFeaturesController.class },
@@ -35,10 +30,7 @@ public class WebClientFeaturesTest {
     @LocalServerPort
     private int port;
 
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
-    @Before
+    @BeforeEach
     public void setUp() {
         client = JettyWebReactiveFeign.<WebClientFeaturesApi>builder()
                 .decode404()

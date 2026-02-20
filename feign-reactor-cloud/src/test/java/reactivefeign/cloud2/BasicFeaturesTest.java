@@ -13,17 +13,29 @@
  */
 package reactivefeign.cloud2;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.core.codec.DecodingException;
 import reactivefeign.ReactiveFeignBuilder;
 
 import java.util.function.Predicate;
 
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+
 /**
  * @author Sergii Karpenko
  */
 public class BasicFeaturesTest extends reactivefeign.BasicFeaturesTest {
+
+  @RegisterExtension
+  public static WireMockExtension wireMockRule = WireMockExtension.newInstance().options(wireMockConfig().dynamicPort()).build();
+
+  @Override
+  public WireMockExtension getWiremockRule() {
+    return wireMockRule;
+  }
 
   @Override
   protected <T> ReactiveFeignBuilder<T> builder() {
@@ -35,7 +47,7 @@ public class BasicFeaturesTest extends reactivefeign.BasicFeaturesTest {
     return throwable -> throwable instanceof DecodingException;
   }
 
-  @Ignore
+  @Disabled
   @Test
   @Override
   public void shouldExpandUrlWithBaseUriForEmptyTarget() {

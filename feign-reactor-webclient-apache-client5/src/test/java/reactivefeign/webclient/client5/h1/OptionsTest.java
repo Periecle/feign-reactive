@@ -13,8 +13,8 @@
  */
 package reactivefeign.webclient.client5.h1;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import reactivefeign.ReactiveFeign;
 import reactivefeign.ReactiveFeignBuilder;
 import reactivefeign.ReactiveOptions;
@@ -30,7 +30,7 @@ import static reactivefeign.webclient.client5.h1.TestUtils.builderHttpWithSocket
 public class OptionsTest extends reactivefeign.OptionsTest {
 
   //TODO investigate why socket timeout doesn't work
-  @Ignore
+  @Disabled
   @Override
   @Test
   public void shouldFailOnReadTimeout() {

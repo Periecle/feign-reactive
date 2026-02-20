@@ -15,9 +15,9 @@ package reactivefeign;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import reactivefeign.client.ReactiveHttpRequestInterceptors;
 import reactivefeign.testcase.IcecreamServiceApi;
 import reactivefeign.testcase.domain.IceCreamOrder;
@@ -25,7 +25,6 @@ import reactivefeign.testcase.domain.OrderGenerator;
 import reactivefeign.utils.Pair;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-import reactor.util.context.Context;
 
 import java.util.HashMap;
 
@@ -43,19 +42,18 @@ import static reactivefeign.utils.MultiValueMapUtils.addOrdered;
  */
 abstract public class RequestInterceptorTest extends BaseReactorTest {
 
-  @Rule
-  public WireMockClassRule wireMockRule = new WireMockClassRule(
-          wireMockConfig().dynamicPort());
+  @RegisterExtension
+  public static WireMockExtension wireMockRule = WireMockExtension.newInstance().options(wireMockConfig().dynamicPort()).build();
 
   abstract protected ReactiveFeignBuilder<IcecreamServiceApi> builder();
 
-  protected WireMockConfiguration wireMockConfig(){
+  protected static WireMockConfiguration wireMockConfig(){
     return WireMockConfiguration.wireMockConfig();
   }
 
   protected IcecreamServiceApi target(ReactiveFeignBuilder<IcecreamServiceApi> builder){
     return builder.target(IcecreamServiceApi.class,
-            "http://localhost:" + wireMockRule.port());
+            "http://localhost:" + wireMockRule.getPort());
   }
 
   @Test
@@ -101,13 +99,11 @@ abstract public class RequestInterceptorTest extends BaseReactorTest {
     String authHeader = "Authorization";
 
     IcecreamServiceApi clientWithAuth = target(builder()
-        .addRequestInterceptor(request -> {
-          return Mono.deferContextual(ctx -> {
+        .addRequestInterceptor(request -> Mono.deferContextual(ctx -> {
             addOrdered(request.headers(), authHeader, ctx.get(authHeader));
             request.headers().remove(UPPER_HEADER_TO_REMOVE.toLowerCase());
             return Mono.just(request);
-          });
-        }));
+          })));
 
     IcecreamServiceApi clientWithAuth2 = target(builder()
             .addRequestInterceptor(request -> Mono

@@ -13,10 +13,10 @@
  */
 package reactivefeign.rx2;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import reactivefeign.ReactiveFeign;
 import reactivefeign.rx2.testcase.IcecreamServiceApi;
 import reactivefeign.rx2.testcase.domain.IceCreamOrder;
@@ -26,7 +26,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.awaitility.Awaitility.waitAtMost;
 
 /**
@@ -38,18 +37,22 @@ public class ReactivityTest {
   public static final int CALLS_NUMBER = 500;
   public static final int REACTIVE_GAIN_RATIO = 50;
 
-  @Rule
-  public WireMockClassRule wireMockRule = new WireMockClassRule(
-      wireMockConfig()
-          .asynchronousResponseEnabled(true)
-          .dynamicPort());
+
+  @RegisterExtension
+  public static WireMockExtension wireMockRule = WireMockExtension.newInstance()
+          .options(
+            WireMockConfiguration.wireMockConfig()
+                    .asynchronousResponseEnabled(true)
+                    .dynamicPort()
+          )
+          .build();
 
   protected ReactiveFeign.Builder<IcecreamServiceApi> builder(){
     return Rx2ReactiveFeign.builder();
   }
 
   @Test
-  public void shouldRunReactively() throws JsonProcessingException {
+  void shouldRunReactively() throws Exception {
 
     IceCreamOrder orderGenerated = new OrderGenerator().generate(1);
     String orderStr = TestUtils.MAPPER.writeValueAsString(orderGenerated);
@@ -63,7 +66,7 @@ public class ReactivityTest {
 
     IcecreamServiceApi client = builder()
         .target(IcecreamServiceApi.class,
-            "http://localhost:" + wireMockRule.port());
+            "http://localhost:" + wireMockRule.getPort());
 
     AtomicInteger counter = new AtomicInteger();
 

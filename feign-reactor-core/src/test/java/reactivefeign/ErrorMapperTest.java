@@ -15,12 +15,14 @@ package reactivefeign;
 
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import feign.FeignException;
 import feign.Request;
 import feign.RetryableException;
-import org.junit.Before;
 import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import reactivefeign.testcase.IcecreamServiceApi;
 import reactor.test.StepVerifier;
 
@@ -40,9 +42,8 @@ import static reactivefeign.utils.HttpStatus.SC_UNAUTHORIZED;
  */
 public abstract class ErrorMapperTest extends BaseReactorTest {
 
-  @Rule
-  public WireMockClassRule wireMockRule = new WireMockClassRule(
-      wireMockConfig().dynamicPort());
+  @RegisterExtension
+  public WireMockExtension wireMockRule = WireMockExtension.newInstance().options(wireMockConfig().dynamicPort()).build();
 
   abstract protected ReactiveFeignBuilder<IcecreamServiceApi> builder();
 
@@ -50,7 +51,7 @@ public abstract class ErrorMapperTest extends BaseReactorTest {
     return WireMockConfiguration.wireMockConfig();
   }
 
-  @Before
+  @BeforeEach
   public void resetServers() {
     wireMockRule.resetAll();
   }
@@ -65,7 +66,7 @@ public abstract class ErrorMapperTest extends BaseReactorTest {
               }
               return throwable;
             })
-            .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.port());
+            .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.getPort());
 
 
     wireMockRule.stubFor(get(urlEqualTo("/icecream/orders/1"))
@@ -87,7 +88,7 @@ public abstract class ErrorMapperTest extends BaseReactorTest {
               }
               return throwable;
             })
-            .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.port());
+            .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.getPort());
 
 
     wireMockRule.stubFor(get(urlEqualTo("/icecream/mixins"))

@@ -26,8 +26,7 @@ import static reactivefeign.wiremock.WireMockServerConfigurations.h2cConfig;
  */
 public class RetryingTest extends reactivefeign.RetryingTest {
 
-  @Override
-  protected WireMockConfiguration wireMockConfig(){
+  protected static WireMockConfiguration wireMockConfig(){
     return h2cConfig(true, CALLS_NUMBER);
   }
 

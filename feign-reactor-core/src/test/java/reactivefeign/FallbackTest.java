@@ -14,11 +14,11 @@
 package reactivefeign;
 
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import feign.RequestLine;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -41,17 +41,16 @@ public abstract class FallbackTest extends BaseReactorTest {
     public Flux<Integer> getFlux() { return Flux.just(1, 2, 3);}
   };
 
-  @Rule
-  public WireMockClassRule wireMockRule = new WireMockClassRule(
-      wireMockConfig().dynamicPort());
+  @RegisterExtension
+  public static WireMockExtension wireMockRule = WireMockExtension.newInstance().options(wireMockConfig().dynamicPort()).build();
 
   abstract protected ReactiveFeignBuilder<TestInterface> builder();
 
-  protected WireMockConfiguration wireMockConfig(){
+  protected static WireMockConfiguration wireMockConfig(){
     return WireMockConfiguration.wireMockConfig();
   }
 
-  @Before
+  @BeforeEach
   public void resetServers() {
     wireMockRule.resetAll();
   }
@@ -59,17 +58,17 @@ public abstract class FallbackTest extends BaseReactorTest {
   @Test
   public void shouldNotFailDueToFallback() {
 
-    stubFor(get(urlEqualTo(MONO_URL))
+    wireMockRule.stubFor(get(urlEqualTo(MONO_URL))
             .willReturn(aResponse()
                     .withStatus(598)));
-    stubFor(get(urlEqualTo(FLUX_URL))
+    wireMockRule.stubFor(get(urlEqualTo(FLUX_URL))
             .willReturn(aResponse()
                     .withStatus(598)));
 
 
     TestInterface client = builder()
             .fallback(FALLBACK)
-            .target(TestInterface.class, "http://localhost:" + wireMockRule.port());
+            .target(TestInterface.class, "http://localhost:" + wireMockRule.getPort());
 
     StepVerifier.create(client.getMono().subscribeOn(testScheduler()))
             .expectNext(fallbackValue)
@@ -86,7 +85,7 @@ public abstract class FallbackTest extends BaseReactorTest {
   @Test
   public void shouldFailDueToErrorInFallback() {
 
-    stubFor(get(urlEqualTo(MONO_URL))
+    wireMockRule.stubFor(get(urlEqualTo(MONO_URL))
             .willReturn(aResponse()
                     .withStatus(598)));
 
@@ -98,7 +97,7 @@ public abstract class FallbackTest extends BaseReactorTest {
               @Override
               public Flux<Integer> getFlux() { throw  new RuntimeException(); }
             })
-            .target(TestInterface.class, "http://localhost:" + wireMockRule.port());
+            .target(TestInterface.class, "http://localhost:" + wireMockRule.getPort());
 
     StepVerifier.create(client.getMono().subscribeOn(testScheduler()))
             .expectErrorMatches(throwable -> throwable instanceof InvocationTargetException)

@@ -13,15 +13,35 @@
  */
 package reactivefeign.java11.h1;
 
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import reactivefeign.ReactiveFeign;
 import reactivefeign.java11.Java11ReactiveFeign;
 import reactivefeign.java11.Java11ReactiveOptions;
 import reactivefeign.testcase.IcecreamServiceApi;
 
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+
 /**
  * @author Sergii Karpenko
  */
 public class DefaultMethodTest extends reactivefeign.DefaultMethodTest {
+
+  @RegisterExtension
+  public static WireMockExtension wireMockRule = WireMockExtension.newInstance().options(wireMockConfig().dynamicPort()).build();
+
+  @RegisterExtension
+  public static WireMockExtension wireMockRule2 = WireMockExtension.newInstance().options(wireMockConfig().dynamicPort()).build();
+
+  @Override
+  public WireMockExtension getWiremockRule() {
+    return wireMockRule;
+  }
+
+  @Override
+  public WireMockExtension getWiremockRule2() {
+    return wireMockRule2;
+  }
 
   @Override
   protected ReactiveFeign.Builder<IcecreamServiceApi> builder() {

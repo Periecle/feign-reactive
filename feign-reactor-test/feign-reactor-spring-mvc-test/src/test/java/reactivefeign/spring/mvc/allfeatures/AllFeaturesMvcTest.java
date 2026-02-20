@@ -16,8 +16,8 @@
 
 package reactivefeign.spring.mvc.allfeatures;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.reactive.ReactiveSecurityAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.reactive.ReactiveUserDetailsServiceAutoConfiguration;
@@ -34,6 +34,7 @@ import java.util.Map;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * @author Sergii Karpenko
@@ -65,10 +66,11 @@ abstract public class AllFeaturesMvcTest extends AllFeaturesTest{
 	//TODO https://github.com/Playtika/feign-reactive/issues/186
 	//should be fixed in RequestHeaderParameterProcessor
 	@Override
-	@Test(expected = IllegalStateException.class)
+	@Test
 	public void shouldPassHeaderAndRequestParameterWithSameName() {
-		super.shouldPassHeaderAndRequestParameterWithSameName();
-	}
+    assertThrows(IllegalStateException.class, () ->
+      super.shouldPassHeaderAndRequestParameterWithSameName());
+  }
 
 	@Test
 	public void shouldReturnAllPassedParametersViaSpringQueryMap() {
@@ -86,7 +88,7 @@ abstract public class AllFeaturesMvcTest extends AllFeaturesTest{
 
 	@Test
 	@Override
-	@Ignore
+	@Disabled
 	//expanders not supported by Spring
 	public void shouldExpandPathParam() {
 	}

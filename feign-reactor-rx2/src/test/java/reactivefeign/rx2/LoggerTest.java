@@ -14,7 +14,8 @@
 
 package reactivefeign.rx2;
 
-import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import io.reactivex.Single;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -24,9 +25,9 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.assertj.core.api.Condition;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import reactivefeign.ReactiveFeign;
@@ -39,7 +40,6 @@ import reactivefeign.rx2.testcase.domain.OrderGenerator;
 import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -49,11 +49,15 @@ import static org.mockito.Mockito.*;
 public class LoggerTest {
 
   public static final String LOGGER_NAME = DefaultReactiveLogger.class.getName();
-  @ClassRule
-  public static WireMockClassRule wireMockRule = new WireMockClassRule(
-      wireMockConfig()
-          .asynchronousResponseEnabled(true)
-          .dynamicPort());
+
+  @RegisterExtension
+  public static WireMockExtension wireMockRule = WireMockExtension.newInstance()
+          .options(
+                  WireMockConfiguration.wireMockConfig()
+                          .asynchronousResponseEnabled(true)
+                          .dynamicPort()
+          )
+          .build();
 
   protected ReactiveFeign.Builder<IcecreamServiceApi> builder(){
     return Rx2ReactiveFeign.builder();
@@ -62,7 +66,7 @@ public class LoggerTest {
   protected Appender appender;
 
   @Test
-  public void shouldLog() throws Exception {
+  void shouldLog() throws Exception {
 
     setLogLevel(Level.TRACE);
 
@@ -77,7 +81,7 @@ public class LoggerTest {
 
     IcecreamServiceApi client = builder()
         .target(IcecreamServiceApi.class,
-            "http://localhost:" + wireMockRule.port());
+            "http://localhost:" + wireMockRule.getPort());
 
     Single<Bill> billMono = client.makeOrder(order);
 
@@ -127,8 +131,8 @@ public class LoggerTest {
         .has(new Condition<>(o -> ((String) o).contains(message2), "check message2"));
   }
 
-  @Before
-  public void before() {
+  @BeforeEach
+  void before() {
     appender = Mockito.mock(Appender.class);
     when(appender.getName()).thenReturn("TestAppender");
     when(appender.isStarted()).thenReturn(true);

@@ -13,6 +13,8 @@
  */
 package reactivefeign.resttemplate;
 
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import reactivefeign.ReactiveFeignBuilder;
 import reactivefeign.resttemplate.client.RestTemplateFakeReactiveFeign;
 import reactivefeign.resttemplate.client.RestTemplateReactiveOptions;
@@ -20,15 +22,25 @@ import reactivefeign.testcase.IcecreamServiceApi;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+
 /**
  * @author Sergii Karpenko
  */
 public class CompressionTest extends reactivefeign.CompressionTest {
 
+  @RegisterExtension
+  public static WireMockExtension wireMockRule = WireMockExtension.newInstance().options(wireMockConfig().dynamicPort()).build();
+
   @Override
   protected ReactiveFeignBuilder<IcecreamServiceApi> builder(boolean tryUseCompression) {
     return RestTemplateFakeReactiveFeign.<IcecreamServiceApi>builder().options(
             new RestTemplateReactiveOptions.Builder().setAcceptCompressed(true).build());
+  }
+
+  @Override
+  public WireMockExtension getWiremockRule() {
+    return wireMockRule;
   }
 
   //to not detect blocking calls

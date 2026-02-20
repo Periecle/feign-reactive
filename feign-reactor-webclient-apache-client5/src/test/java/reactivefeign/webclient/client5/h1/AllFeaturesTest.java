@@ -16,8 +16,8 @@
 
 package reactivefeign.webclient.client5.h1;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.reactive.ReactiveSecurityAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.reactive.ReactiveUserDetailsServiceAutoConfiguration;
@@ -44,26 +44,26 @@ public class AllFeaturesTest extends AllFeaturesFeignTest {
 	//Need specific client options configuration
 	/*.setConnectionsMaxTotal(1000)
       .setConnectionsDefaultMaxPerRoute(1000)*/
-	@Ignore
+	@Disabled
 	@Override
 	@Test
 	public void shouldRunReactively() {
 	}
 
-	@Ignore
+	@Disabled
 	@Override
 	@Test
 	public void shouldMirrorStreamingBinaryBodyReactive() {
 	}
 
 	//Apache's  WebClient is not able to do this trick
-	@Ignore
+	@Disabled
 	@Test
 	@Override
 	public void shouldReturnFirstResultBeforeSecondSent() {
 	}
 
-	@Ignore
+	@Disabled
 	@Test
 	@Override
 	public void shouldMirrorStringStreamBody() {

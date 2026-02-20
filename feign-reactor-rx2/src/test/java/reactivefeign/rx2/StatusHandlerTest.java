@@ -13,19 +13,19 @@
  */
 package reactivefeign.rx2;
 
-import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import feign.Request;
 import feign.RetryableException;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import reactivefeign.rx2.testcase.IcecreamServiceApi;
 
 import java.nio.charset.Charset;
 import java.util.Collections;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static reactivefeign.rx2.client.statushandler.Rx2StatusHandlers.throwOnStatus;
 import static reactivefeign.utils.FeignUtils.httpMethod;
 import static reactivefeign.utils.HttpStatus.SC_SERVICE_UNAVAILABLE;
@@ -36,21 +36,21 @@ import static reactivefeign.utils.HttpStatus.SC_UNAUTHORIZED;
  */
 public class StatusHandlerTest {
 
-  @ClassRule
-  public static WireMockClassRule wireMockRule = new WireMockClassRule(
-      wireMockConfig().dynamicPort());
+  @RegisterExtension
+  public static WireMockExtension wireMockRule = WireMockExtension.newInstance().options(WireMockConfiguration.wireMockConfig()
+          .dynamicPort()).build();
 
   protected Rx2ReactiveFeign.Builder<IcecreamServiceApi> builder(){
     return Rx2ReactiveFeign.builder();
   }
 
-  @Before
-  public void resetServers() {
+  @BeforeEach
+  void resetServers() {
     wireMockRule.resetAll();
   }
 
   @Test
-  public void shouldThrowRetryException() throws InterruptedException {
+  void shouldThrowRetryException() throws Exception {
 
     wireMockRule.stubFor(get(urlEqualTo("/icecream/orders/1"))
         .withHeader("Accept", equalTo("application/json"))
@@ -67,7 +67,7 @@ public class StatusHandlerTest {
                       "Should retry on next node",
                       httpMethod, (Long) null, request);
             }))
-        .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.port());
+        .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.getPort());
 
     client.findFirstOrder().test()
             .await()
@@ -75,7 +75,7 @@ public class StatusHandlerTest {
   }
 
   @Test
-  public void shouldThrowOnStatusCode() throws InterruptedException {
+  void shouldThrowOnStatusCode() throws Exception {
 
     wireMockRule.stubFor(get(urlEqualTo("/icecream/orders/2"))
         .withHeader("Accept", equalTo("application/json"))
@@ -87,7 +87,7 @@ public class StatusHandlerTest {
             throwOnStatus(
                 status -> status == SC_UNAUTHORIZED,
                 (methodTag, response) -> new RuntimeException("Should login", null)))
-        .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.port());
+        .target(IcecreamServiceApi.class, "http://localhost:" + wireMockRule.getPort());
 
     client.findOrder(2).test()
             .await()

@@ -13,17 +13,29 @@
  */
 package reactivefeign.webclient;
 
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import reactivefeign.ReactiveFeign;
 import reactivefeign.testcase.IcecreamServiceApi;
+
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 
 /**
  * @author Sergii Karpenko
  */
 public class CompressionTest extends reactivefeign.CompressionTest {
 
+  @RegisterExtension
+  public static WireMockExtension wireMockRule = WireMockExtension.newInstance().options(wireMockConfig().dynamicPort()).build();
+
   @Override
   protected ReactiveFeign.Builder<IcecreamServiceApi> builder(boolean tryUseCompression) {
     return WebReactiveFeign.<IcecreamServiceApi>builder().options(
             new WebReactiveOptions.Builder().setAcceptCompressed(tryUseCompression).build());
+  }
+
+  @Override
+  public WireMockExtension getWiremockRule() {
+    return wireMockRule;
   }
 }

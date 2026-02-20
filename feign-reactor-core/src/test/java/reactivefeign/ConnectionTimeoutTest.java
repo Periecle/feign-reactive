@@ -14,8 +14,10 @@
 package reactivefeign;
 
 import org.hamcrest.Matchers;
-import org.junit.*;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import reactivefeign.testcase.IcecreamServiceApi;
 
 import java.io.IOException;
@@ -23,13 +25,13 @@ import java.net.ConnectException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 /**
  * @author Sergii Karpenko
  */
 abstract public class ConnectionTimeoutTest extends BaseReactorTest{
-
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
 
   private ServerSocket serverSocket;
   private Socket socket;
@@ -37,7 +39,7 @@ abstract public class ConnectionTimeoutTest extends BaseReactorTest{
 
   abstract protected ReactiveFeignBuilder<IcecreamServiceApi> builder(long connectTimeoutInMillis);
 
-  @Before
+  @BeforeEach
   public void before() throws IOException {
     // server socket with single element backlog queue (1) and dynamicaly allocated
     // port (0)
@@ -49,7 +51,7 @@ abstract public class ConnectionTimeoutTest extends BaseReactorTest{
     socket.connect(serverSocket.getLocalSocketAddress());
   }
 
-  @After
+  @AfterEach
   public void after() throws IOException {
     // some cleanup
     if (serverSocket != null && !serverSocket.isClosed()) {
@@ -58,18 +60,19 @@ abstract public class ConnectionTimeoutTest extends BaseReactorTest{
   }
 
   // TODO investigate why doesn't work on codecov.io but works locally
-  @Ignore
+  @Disabled
   @Test
   public void shouldFailOnConnectionTimeout() {
 
-    expectedException.expectCause(
+    Throwable exception = assertThrows(Exception.class, () -> {
 
-        Matchers.any(ConnectException.class));
+      IcecreamServiceApi client = builder(300)
+              .target(IcecreamServiceApi.class, "http://localhost:" + port);
 
-    IcecreamServiceApi client = builder(300)
-                .target(IcecreamServiceApi.class, "http://localhost:" + port);
+      client.findOrder(1).subscribeOn(testScheduler()).block();
+    });
 
-    client.findOrder(1).subscribeOn(testScheduler()).block();
+    assertThat(exception.getCause(), Matchers.instanceOf(ConnectException.class));
   }
 
 }

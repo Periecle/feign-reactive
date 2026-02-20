@@ -1,11 +1,8 @@
 package reactivefeign.webclient.allfeatures;
 
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.reactive.ReactiveUserDetailsServiceAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -14,7 +11,6 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.core.io.buffer.DefaultDataBufferFactory;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.MultiValueMapAdapter;
 import reactivefeign.webclient.WebReactiveFeign;
 import reactor.core.publisher.Flux;
@@ -28,7 +24,6 @@ import static java.nio.ByteBuffer.wrap;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(
         properties = {"spring.main.web-application-type=reactive"},
         classes = {WebClientFeaturesController.class },
@@ -41,7 +36,7 @@ public class WebClientFeaturesTest {
     @LocalServerPort
     private int port;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         client = WebReactiveFeign.<WebClientFeaturesApi>builder()
                 .decode404()

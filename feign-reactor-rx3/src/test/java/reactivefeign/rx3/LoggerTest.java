@@ -14,7 +14,7 @@
 
 package reactivefeign.rx3;
 
-import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import io.reactivex.rxjava3.core.Single;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -24,9 +24,9 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.assertj.core.api.Condition;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import reactivefeign.ReactiveFeign;
@@ -49,11 +49,10 @@ import static org.mockito.Mockito.*;
 public class LoggerTest {
 
   public static final String LOGGER_NAME = DefaultReactiveLogger.class.getName();
-  @ClassRule
-  public static WireMockClassRule wireMockRule = new WireMockClassRule(
-      wireMockConfig()
+  @RegisterExtension
+  public static WireMockExtension wireMockRule = WireMockExtension.newInstance().options(wireMockConfig()
           .asynchronousResponseEnabled(true)
-          .dynamicPort());
+          .dynamicPort()).build();
 
   protected ReactiveFeign.Builder<IcecreamServiceApi> builder(){
     return Rx3ReactiveFeign.builder();
@@ -77,7 +76,7 @@ public class LoggerTest {
 
     IcecreamServiceApi client = builder()
         .target(IcecreamServiceApi.class,
-            "http://localhost:" + wireMockRule.port());
+            "http://localhost:" + wireMockRule.getPort());
 
     Single<Bill> billMono = client.makeOrder(order);
 
@@ -127,7 +126,7 @@ public class LoggerTest {
         .has(new Condition<>(o -> ((String) o).contains(message2), "check message2"));
   }
 
-  @Before
+  @BeforeEach
   public void before() {
     appender = Mockito.mock(Appender.class);
     when(appender.getName()).thenReturn("TestAppender");

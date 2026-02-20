@@ -13,41 +13,30 @@
  */
 package reactivefeign;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.github.tomakehurst.wiremock.stubbing.ServeEvent;
 import feign.CollectionFormat;
 import feign.Param;
 import feign.RequestLine;
-import org.junit.Rule;
-import org.junit.Test;
-import reactivefeign.testcase.IcecreamServiceApi;
-import reactivefeign.testcase.domain.Bill;
-import reactivefeign.testcase.domain.IceCreamOrder;
-import reactivefeign.testcase.domain.OrderGenerator;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static reactivefeign.TestUtils.MAPPER;
 
 /**
  * @author Sergii Karpenko
  */
 abstract public class CollectionFormatTest extends BaseReactorTest {
 
-  @Rule
-  public WireMockClassRule wireMockRule = new WireMockClassRule(
-      wireMockConfig().dynamicPort());
+  @RegisterExtension
+  public WireMockExtension wireMockRule = WireMockExtension.newInstance().options(wireMockConfig().dynamicPort()).build();
 
   abstract protected ReactiveFeignBuilder<TestFeign> builder();
 
@@ -62,7 +51,7 @@ abstract public class CollectionFormatTest extends BaseReactorTest {
             .willReturn(aResponse().withStatus(200)));
 
     TestFeign client = builder()
-            .target(TestFeign.class, "http://localhost:" + wireMockRule.port());
+            .target(TestFeign.class, "http://localhost:" + wireMockRule.getPort());
 
     Mono<Void> completion = client.callWithDefaultCollectionFormat(asList(1, 2, 3));
 
@@ -80,7 +69,7 @@ abstract public class CollectionFormatTest extends BaseReactorTest {
             .willReturn(aResponse().withStatus(200)));
 
     TestFeign client = builder()
-            .target(TestFeign.class, "http://localhost:" + wireMockRule.port());
+            .target(TestFeign.class, "http://localhost:" + wireMockRule.getPort());
 
     Mono<Void> completion = client.callWithCustomCollectionFormat(asList(1, 2, 3));
 

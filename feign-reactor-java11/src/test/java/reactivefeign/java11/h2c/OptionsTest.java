@@ -14,8 +14,8 @@
 package reactivefeign.java11.h2c;
 
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import reactivefeign.ReactiveFeign;
 import reactivefeign.ReactiveFeignBuilder;
 import reactivefeign.ReactiveOptions;
@@ -31,8 +31,7 @@ import static reactivefeign.wiremock.WireMockServerConfigurations.h2cConfig;
  */
 public class OptionsTest extends reactivefeign.OptionsTest {
 
-  @Override
-  protected WireMockConfiguration wireMockConfig(){
+  protected static WireMockConfiguration wireMockConfig(){
     return h2cConfig(true, CALLS_NUMBER);
   }
 
@@ -57,7 +56,7 @@ public class OptionsTest extends reactivefeign.OptionsTest {
     throw new IllegalArgumentException();
   }
 
-  @Ignore
+  @Disabled
   @Override
   @Test
   public void shouldUseProxy() {}

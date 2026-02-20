@@ -13,11 +13,10 @@ package reactivefeign;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import reactivefeign.testcase.IcecreamServiceApi;
 import reactivefeign.testcase.domain.*;
 import reactor.core.publisher.Flux;
@@ -38,17 +37,17 @@ import static reactivefeign.TestUtils.equalsComparingFieldByFieldRecursively;
 
 abstract public class SmokeTest extends BaseReactorTest {
 
-  @Rule
-  public WireMockClassRule wireMockRule = new WireMockClassRule(wireMockConfig());
+  @RegisterExtension
+  public static WireMockExtension wireMockRule = WireMockExtension.newInstance().options(wireMockConfig()).build();
 
   abstract protected ReactiveFeignBuilder<IcecreamServiceApi> builder();
 
-  protected WireMockConfiguration wireMockConfig(){
+  protected static WireMockConfiguration wireMockConfig(){
     return WireMockConfiguration.wireMockConfig().dynamicPort();
   }
 
   protected int wireMockPort(){
-    return wireMockRule.port();
+    return wireMockRule.getPort();
   }
 
   protected IcecreamServiceApi client;
@@ -57,10 +56,7 @@ abstract public class SmokeTest extends BaseReactorTest {
   private Map<Integer, IceCreamOrder> orders = generator.generateRange(10).stream()
       .collect(Collectors.toMap(IceCreamOrder::getId, o -> o));
 
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
-
-  @Before
+  @BeforeEach
   public void setUp() {
     String targetUrl = getTargetUrl();
     client = this.builder()
